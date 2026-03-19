@@ -85,3 +85,25 @@ async function start() {
 }
 
 start();
+
+
+// ── KEEPALIVE SELF-PING ──────────────────────────────────────────────────────
+// Pings itself every 14 minutes so Render free tier never goes to sleep.
+// Only runs in production to avoid unnecessary requests in local dev.
+if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+  const https = require('https');
+  const http  = require('http');
+
+  setInterval(() => {
+    const url = `${process.env.RENDER_EXTERNAL_URL}/api/health`;
+    const lib  = url.startsWith('https') ? https : http;
+
+    lib.get(url, (res) => {
+      console.log(`🏓 Keepalive ping → ${res.statusCode}`);
+    }).on('error', (err) => {
+      console.warn(`⚠️  Keepalive failed: ${err.message}`);
+    });
+  }, 14 * 60 * 1000); // every 14 minutes
+
+  console.log('✅ Keepalive self-ping active (every 14 min)');
+}
