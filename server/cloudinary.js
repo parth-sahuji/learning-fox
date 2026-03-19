@@ -2,7 +2,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// Configure Cloudinary
+// Configure Cloudinary (same API for v1 and v2 when using .v2)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
@@ -13,8 +13,8 @@ cloudinary.config({
 const regDocsStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder:   'learningfox/reg_docs',
-    resource_type: 'auto', // handles PDF + images
+    folder:        'learningfox/reg_docs',
+    resource_type: 'auto',
     allowed_formats: ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
   },
 });
@@ -23,14 +23,17 @@ const regDocsStorage = new CloudinaryStorage({
 const portfolioStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder:   'learningfox/portfolio',
+    folder:        'learningfox/portfolio',
     resource_type: 'auto',
     allowed_formats: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif'],
   },
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ['application/pdf','image/jpeg','image/jpg','image/png','image/webp','image/gif'];
+  const allowed = [
+    'application/pdf',
+    'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+  ];
   if (allowed.includes(file.mimetype)) cb(null, true);
   else cb(new Error('Only PDF and image files are allowed'), false);
 };
