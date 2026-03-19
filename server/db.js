@@ -1,25 +1,33 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Supports both DATABASE_URL (Supabase/Railway) and individual vars (local)
-const pool = new Pool(
-  process.env.DATABASE_URL
-    ? {
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }, // required for Supabase
-      }
-    : {
-        host:     process.env.DB_HOST     || 'localhost',
-        port:     parseInt(process.env.DB_PORT || '5432'),
-        database: process.env.DB_NAME     || 'tutorapp',
-        user:     process.env.DB_USER     || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
-      }
-);
+// Validate DATABASE_URL before trying to connect
+const dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  console.error('❌ DATABASE_URL environment variable is not set');
+  process.exit(1);
+}
+
+// Quick validation - must start with postgres
+if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {
+  console.error('❌ DATABASE_URL must start with postgres:// or postgresql://');
+  console.error('❌ Current value starts with:', dbUrl.substring(0, 20) + '...');
+  process.exit(1);
+}
+
+console.log('✅ DATABASE_URL format looks valid');
+console.log('   Connecting to:', dbUrl.replace(/:([^:@]+)@/, ':****@')); // log with password hidden
+
+const pool = new Pool({
+  connectionString: dbUrl,
+  ssl: { rejectUnauthorized: false },
+  connectionTimeoutMillis: 10000,
+});
 
 pool.on('error', (err) => console.error('Unexpected DB error', err));
 
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
 
 async function initDB() {
@@ -50,6 +58,7 @@ async function initDB() {
     }
   } catch (err) {
     console.error('❌ DB init error:', err.message);
+    throw err;
   } finally {
     client.release();
   }
