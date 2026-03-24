@@ -21,8 +21,10 @@ router.post('/register', (req, res, next) => {
 }, async (req, res) => {
   const {
     email, password, full_name, phone, role, agency_id = 'default',
-    class_from, class_to, subjects_taught, languages,
-    class: studentClass, subjects, days_per_week, address, school_board, locality,
+    class_from: cf, class_to: ct, teach_class_from, teach_class_to,
+    subjects_taught: st, subjects: subj, subject_needs,
+    languages,
+    class: studentClass, days_per_week, address, school_board, locality,
   } = req.body;
 
   if (!email || !password || !full_name || !role)
@@ -37,12 +39,16 @@ router.post('/register', (req, res, next) => {
   if (role === 'teacher') {
     if (!req.files?.aadhar_doc) return res.status(400).json({ error: 'Aadhar card document is required' });
     if (!req.files?.resume_doc) return res.status(400).json({ error: 'Resume/CV is required' });
+    const subjects_taught = st || '';
+    const class_from = cf || teach_class_from || '';
+    const class_to = ct || teach_class_to || '';
     if (!subjects_taught) return res.status(400).json({ error: 'Please specify subjects you can teach' });
     if (!languages)       return res.status(400).json({ error: 'Please specify languages you can speak' });
   }
   if (role === 'student') {
     if (!studentClass)   return res.status(400).json({ error: 'Please specify your class' });
-    if (!subjects)       return res.status(400).json({ error: 'Please specify subjects you need' });
+    const subjects = subj || subject_needs || '';
+    if (!subjects) return res.status(400).json({ error: 'Please specify subjects you need' });
     if (!address)        return res.status(400).json({ error: 'Address/location is required' });
   }
 
