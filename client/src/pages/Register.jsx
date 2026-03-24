@@ -70,9 +70,9 @@ export default function Register() {
   };
 
   const goToStep3 = () => {
+    setError('');
     const err = validateStep2();
     if (err) { setError(err); return; }
-    setError('');
     setStep(3);
   };
 
