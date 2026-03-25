@@ -205,4 +205,66 @@ router.put('/notifications/read', authenticate, async (req, res) => {
   } finally { client.release(); }
 });
 
+
+// POST /api/auth/register/student — JSON route, no file uploads
+// Separate from teacher route to avoid multer parsing issues
+router.post('/register/student', async (req, res) => {
+  const {
+    email, password, full_name, phone, agency_id = 'default',
+    class: studentClass, subjects, school_board,
+    days_per_week, address, locality,
+  } = req.body;
+
+  if (!email || !password || !full_name || !phone)
+    return res.status(400).json({ error: 'email, password, full_name, phone are required' });
+  if (phone.replace(/\D/g, '').length < 10)
+    return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!studentClass)
+    return res.status(400).json({ error: 'Please specify your class' });
+  if (!subjects || !subjects.trim())
+    return res.status(400).json({ error: 'Please specify subjects you need' });
+  if (!address || !address.trim())
+    return res.status(400).json({ error: 'Address/location is required' });
+
+  const client = await pool.connect();
+  try {
+    const existing = await client.query(
+      'SELECT id FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+    if (existing.rows.length > 0)
+      return res.status(409).json({ error: 'Email already registered' });
+
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      `INSERT INTO users (agency_id, email, password_hash, role, full_name, phone, status)
+       VALUES ($1,$2,$3,'student',$4,$5,'pending')
+       RETURNING id, email, role, full_name, status, agency_id`,
+      [agency_id, email.toLowerCase(), hash, full_name, phone.trim()]
+    );
+    const user = result.rows[0];
+
+    await client.query(
+      `INSERT INTO student_profiles (agency_id, user_id, class, subjects, days_per_week, address, school_board, locality)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [agency_id, user.id, studentClass, subjects.trim(),
+       parseInt(days_per_week) || 3, address.trim(),
+       school_board || '', locality || '']
+    );
+
+    res.status(201).json({
+      message: 'Registration successful. Please wait for admin approval.',
+      user: { id: user.id, email: user.email, role: user.role, status: user.status },
+    });
+  } catch (err) {
+    console.error('Student registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;

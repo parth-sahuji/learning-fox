@@ -81,15 +81,16 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      const fd = new FormData();
-      fd.append('full_name', form.full_name);
-      fd.append('email', form.email);
-      fd.append('phone', form.phone);
-      fd.append('password', form.password);
-      fd.append('role', role);
-      fd.append('terms_accepted', 'true');
+      let response;
 
       if (role === 'teacher') {
+        // Teachers have file uploads — must use FormData/multipart
+        const fd = new FormData();
+        fd.append('full_name', form.full_name);
+        fd.append('email', form.email);
+        fd.append('phone', form.phone);
+        fd.append('password', form.password);
+        fd.append('role', 'teacher');
         fd.append('subjects', form.subjects.join(', '));
         fd.append('languages', form.languages.join(', '));
         fd.append('teach_class_from', form.teach_class_from);
@@ -99,16 +100,24 @@ export default function Register() {
         fd.append('bio', form.bio);
         if (aadharFile) fd.append('aadhar_doc', aadharFile);
         if (resumeFile) fd.append('resume_doc', resumeFile);
+        response = await api.post('/auth/register', fd);
       } else {
-        fd.append('class', form.class);
-        fd.append('subject_needs', form.subject_needs.join(', '));
-        fd.append('school_board', form.school_board);
-        fd.append('days_per_week', form.days_per_week);
-        fd.append('address', form.address);
-        fd.append('locality', form.locality);
+        // Students have NO file uploads — send as plain JSON (reliable, no multer issues)
+        response = await api.post('/auth/register/student', {
+          full_name: form.full_name,
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+          role: 'student',
+          class: form.class,
+          subjects: form.subject_needs.join(', '),
+          school_board: form.school_board,
+          days_per_week: form.days_per_week,
+          address: form.address,
+          locality: form.locality,
+        });
       }
 
-      await api.post('/auth/register', fd); // axios sets Content-Type + boundary automatically for FormData
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
