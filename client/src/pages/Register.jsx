@@ -108,7 +108,7 @@ export default function Register() {
         fd.append('locality', form.locality);
       }
 
-      await api.post('/auth/register', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post('/auth/register', fd); // axios sets Content-Type + boundary automatically for FormData
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
