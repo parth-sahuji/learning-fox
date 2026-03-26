@@ -15,7 +15,12 @@ const ADMIN_EMAILS = [
 // POST /api/auth/register
 router.post('/register', (req, res, next) => {
   uploadRegDocs(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.message });
+    if (err) {
+      console.error('Upload middleware error:', err.message, err.stack);
+      return res.status(400).json({ error: 'File upload failed: ' + err.message });
+    }
+    console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
+    console.log('Body keys:', req.body ? Object.keys(req.body) : 'none');
     next();
   });
 }, async (req, res) => {

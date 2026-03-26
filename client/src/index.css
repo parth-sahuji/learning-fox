@@ -45,11 +45,20 @@
   .btn-danger  { @apply bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95; }
   .btn-success { @apply bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95; }
   .input {
-    background: rgba(255,255,255,0.05);
+    background: #2a1a08;
     border: 1px solid var(--border);
-    @apply w-full text-[var(--text-primary)] rounded-xl px-4 py-2.5
+    color: #fdf0e8 !important;
+    -webkit-text-fill-color: #fdf0e8 !important;
+    @apply w-full rounded-xl px-4 py-2.5
            focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500
            transition-all placeholder:text-[var(--text-secondary)];
+  }
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #2a1a08 inset !important;
+    -webkit-text-fill-color: #fdf0e8 !important;
+    caret-color: #fdf0e8;
   }
   select.input option { background: #1e1409; color: #fdf0e8; }
   .label { @apply block text-sm font-medium text-[var(--text-secondary)] mb-1.5; }
