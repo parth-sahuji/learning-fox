@@ -280,24 +280,49 @@ router.post('/register/student', async (req, res) => {
 });
 
 
-// POST /api/auth/upload-doc — upload a single file, returns Cloudinary URL
-// Used by teacher registration before submitting the main form
-const singleUpload = require('../cloudinary').uploadRegDocs;
+// POST /api/auth/upload-doc — upload file to Cloudinary via memory buffer
+// Uses manual upload to avoid multer-storage-cloudinary issues in production
+const { uploadRegDocs, uploadBufferToCloudinary } = require('../cloudinary');
 
 router.post('/upload-doc', (req, res) => {
-  singleUpload(req, res, (err) => {
+  uploadRegDocs(req, res, async (err) => {
     if (err) {
-      console.error('Upload error:', err);
+      console.error('Multer error:', err);
       return res.status(400).json({ error: err.message || 'Upload failed' });
     }
+
+    console.log('upload-doc files:', req.files ? Object.keys(req.files) : 'none');
+    console.log('upload-doc body keys:', Object.keys(req.body));
+
     const files = req.files || {};
     const result = {};
-    if (files.aadhar_doc?.[0]) result.aadhar_url = files.aadhar_doc[0].path;
-    if (files.resume_doc?.[0]) result.resume_url = files.resume_doc[0].path;
-    if (!result.aadhar_url && !result.resume_url) {
-      return res.status(400).json({ error: 'No file received' });
+
+    try {
+      if (files.aadhar_doc?.[0]?.buffer) {
+        result.aadhar_url = await uploadBufferToCloudinary(
+          files.aadhar_doc[0].buffer,
+          'learningfox/reg_docs',
+          files.aadhar_doc[0].originalname
+        );
+        console.log('Aadhar uploaded:', result.aadhar_url);
+      }
+      if (files.resume_doc?.[0]?.buffer) {
+        result.resume_url = await uploadBufferToCloudinary(
+          files.resume_doc[0].buffer,
+          'learningfox/reg_docs',
+          files.resume_doc[0].originalname
+        );
+      }
+
+      if (!result.aadhar_url) {
+        return res.status(400).json({ error: 'No file received — please select your Aadhar card file again' });
+      }
+
+      res.json(result);
+    } catch (uploadErr) {
+      console.error('Cloudinary upload error:', uploadErr);
+      res.status(500).json({ error: 'File upload to cloud failed. Check Cloudinary credentials.' });
     }
-    res.json(result);
   });
 });
 

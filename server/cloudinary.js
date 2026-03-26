@@ -1,5 +1,4 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
 cloudinary.config({
@@ -8,41 +7,37 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-if (!process.env.CLOUDINARY_CLOUD_NAME) {
-  console.error('❌ Cloudinary credentials missing!');
-} else {
-  console.log('✅ Cloudinary configured:', process.env.CLOUDINARY_CLOUD_NAME);
-}
+console.log('✅ Cloudinary cloud_name:', process.env.CLOUDINARY_CLOUD_NAME);
 
-const regDocsStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'learningfox/reg_docs',
-    resource_type: 'auto',
-  },
-});
+// Use MEMORY storage — file goes to buffer, we upload to Cloudinary manually
+// This is the most reliable approach — no multer-storage-cloudinary dependency
+const memStorage = multer.memoryStorage();
 
-const portfolioStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'learningfox/portfolio',
-    resource_type: 'auto',
-  },
-});
-
-// NO fileFilter — accept everything, let Cloudinary handle it
-// fileFilter was silently dropping files in production causing "Aadhar required" error
 const uploadRegDocs = multer({
-  storage: regDocsStorage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  storage: memStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 }).fields([
   { name: 'aadhar_doc', maxCount: 1 },
   { name: 'resume_doc', maxCount: 1 },
 ]);
 
 const uploadPortfolio = multer({
-  storage: portfolioStorage,
+  storage: memStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
 }).array('files', 10);
 
-module.exports = { cloudinary, uploadRegDocs, uploadPortfolio };
+// Helper: upload a buffer to Cloudinary, returns secure_url
+function uploadBufferToCloudinary(buffer, folder, originalname) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: 'auto' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+}
+
+module.exports = { cloudinary, uploadRegDocs, uploadPortfolio, uploadBufferToCloudinary };
