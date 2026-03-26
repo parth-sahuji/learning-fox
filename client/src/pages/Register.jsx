@@ -84,23 +84,30 @@ export default function Register() {
       let response;
 
       if (role === 'teacher') {
-        // Teachers have file uploads — must use FormData/multipart
-        const fd = new FormData();
-        fd.append('full_name', form.full_name);
-        fd.append('email', form.email);
-        fd.append('phone', form.phone);
-        fd.append('password', form.password);
-        fd.append('role', 'teacher');
-        fd.append('subjects', form.subjects.join(', '));
-        fd.append('languages', form.languages.join(', '));
-        fd.append('teach_class_from', form.teach_class_from);
-        fd.append('teach_class_to', form.teach_class_to);
-        fd.append('education', form.education);
-        fd.append('skills', form.skills);
-        fd.append('bio', form.bio);
-        if (aadharFile) fd.append('aadhar_doc', aadharFile);
-        if (resumeFile) fd.append('resume_doc', resumeFile);
-        response = await api.post('/auth/register', fd);
+        // Step 1: Upload files first to get Cloudinary URLs
+        const uploadFd = new FormData();
+        uploadFd.append('aadhar_doc', aadharFile);
+        if (resumeFile) uploadFd.append('resume_doc', resumeFile);
+        const uploadRes = await api.post('/auth/upload-doc', uploadFd);
+        const { aadhar_url, resume_url } = uploadRes.data;
+
+        // Step 2: Register with JSON (files already uploaded)
+        response = await api.post('/auth/register/teacher', {
+          full_name: form.full_name,
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+          role: 'teacher',
+          subjects: form.subjects.join(', '),
+          languages: form.languages.join(', '),
+          teach_class_from: form.teach_class_from,
+          teach_class_to: form.teach_class_to,
+          education: form.education,
+          skills: form.skills,
+          bio: form.bio,
+          aadhar_url,
+          resume_url: resume_url || '',
+        });
       } else {
         // Students have NO file uploads — send as plain JSON (reliable, no multer issues)
         response = await api.post('/auth/register/student', {

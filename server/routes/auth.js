@@ -84,7 +84,7 @@ router.post('/register', (req, res, next) => {
       [email.toLowerCase(), agency_id]
     );
     if (existing.rows.length > 0)
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'This email is already registered. Please login or use a different email.' });
 
     const hash = await bcrypt.hash(password, 12);
     const result = await client.query(
@@ -247,7 +247,7 @@ router.post('/register/student', async (req, res) => {
       [email.toLowerCase(), agency_id]
     );
     if (existing.rows.length > 0)
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'This email is already registered. Please login or use a different email.' });
 
     const hash = await bcrypt.hash(password, 12);
     const result = await client.query(
@@ -277,6 +277,91 @@ router.post('/register/student', async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+
+// POST /api/auth/upload-doc — upload a single file, returns Cloudinary URL
+// Used by teacher registration before submitting the main form
+const singleUpload = require('../cloudinary').uploadRegDocs;
+
+router.post('/upload-doc', (req, res) => {
+  singleUpload(req, res, (err) => {
+    if (err) {
+      console.error('Upload error:', err);
+      return res.status(400).json({ error: err.message || 'Upload failed' });
+    }
+    const files = req.files || {};
+    const result = {};
+    if (files.aadhar_doc?.[0]) result.aadhar_url = files.aadhar_doc[0].path;
+    if (files.resume_doc?.[0]) result.resume_url = files.resume_doc[0].path;
+    if (!result.aadhar_url && !result.resume_url) {
+      return res.status(400).json({ error: 'No file received' });
+    }
+    res.json(result);
+  });
+});
+
+
+// POST /api/auth/register/teacher — JSON route after files uploaded separately
+router.post('/register/teacher', async (req, res) => {
+  const {
+    email, password, full_name, phone, agency_id = 'default',
+    subjects, languages, teach_class_from, teach_class_to,
+    education, skills, bio,
+    aadhar_url, resume_url,
+  } = req.body;
+
+  if (!email || !password || !full_name || !phone)
+    return res.status(400).json({ error: 'email, password, full_name, phone are required' });
+  if (phone.replace(/\D/g, '').length < 10)
+    return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!aadhar_url)
+    return res.status(400).json({ error: 'Aadhar card document is required' });
+  if (!subjects)
+    return res.status(400).json({ error: 'Please specify subjects you can teach' });
+  if (!languages)
+    return res.status(400).json({ error: 'Please specify languages you can speak' });
+
+  const client = await pool.connect();
+  try {
+    const existing = await client.query(
+      'SELECT id FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+    if (existing.rows.length > 0)
+      return res.status(409).json({ error: 'Email already registered. Please use a different email or login.' });
+
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      `INSERT INTO users (agency_id, email, password_hash, role, full_name, phone, status)
+       VALUES ($1,$2,$3,'teacher',$4,$5,'pending')
+       RETURNING id, email, role, full_name, status, agency_id`,
+      [agency_id, email.toLowerCase(), hash, full_name, phone.trim()]
+    );
+    const user = result.rows[0];
+
+    await client.query(
+      `INSERT INTO teacher_profiles
+         (agency_id, user_id, aadhar_doc, resume_doc, class_from, class_to, subjects_taught, languages, education, skills, bio)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [agency_id, user.id,
+       aadhar_url, resume_url || '',
+       teach_class_from || '', teach_class_to || '',
+       subjects, languages,
+       education || '', skills || '', bio || '']
+    );
+
+    res.status(201).json({
+      message: 'Registration successful. Please wait for admin approval.',
+      user: { id: user.id, email: user.email, role: user.role, status: user.status },
+    });
+  } catch (err) {
+    console.error('Teacher registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  } finally { client.release(); }
 });
 
 module.exports = router;
