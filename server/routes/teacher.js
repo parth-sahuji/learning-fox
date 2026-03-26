@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole, requireApproved } = require('../middleware/auth');
-const { uploadPortfolio, cloudinary } = require('../cloudinary');
+const { uploadPortfolio, cloudinary, uploadToCloudinary } = require('../cloudinary');
 
 const router = express.Router();
 router.use(authenticate, requireRole('teacher'));
@@ -93,14 +93,18 @@ router.post('/portfolio', requireApproved, (req, res, next) => {
   try {
     const existing = await client.query('SELECT portfolio_docs FROM teacher_profiles WHERE user_id=$1', [user_id]);
     const existingDocs = existing.rows[0]?.portfolio_docs || [];
-    const newDocs = req.files.map(f => ({
-      filename:     f.filename,
-      originalname: f.originalname,
-      url:          f.path, // Cloudinary secure_url
-      public_id:    f.filename,
-      mimetype:     f.mimetype,
-      size:         f.size,
-      uploaded_at:  new Date().toISOString(),
+    // Upload each file from disk to Cloudinary
+    const newDocs = await Promise.all(req.files.map(async f => {
+      const url = await uploadToCloudinary(f.path, 'learningfox/portfolio');
+      return {
+        filename:     f.filename,
+        originalname: f.originalname,
+        url,
+        public_id:    f.filename,
+        mimetype:     f.mimetype,
+        size:         f.size,
+        uploaded_at:  new Date().toISOString(),
+      };
     }));
     const allDocs = [...existingDocs, ...newDocs];
     await client.query(

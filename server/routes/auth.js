@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
 const { JWT_SECRET, authenticate } = require('../middleware/auth');
-const { uploadRegDocs } = require('../cloudinary');
+const { uploadRegDocs, uploadToCloudinary } = require('../cloudinary');
 
 const router = express.Router();
 
@@ -92,8 +92,11 @@ router.post('/register', (req, res, next) => {
     const user = result.rows[0];
 
     if (role === 'teacher') {
-      const aadharUrl = req.files.aadhar_doc[0].path;
-      const resumeUrl = req.files.resume_doc ? req.files.resume_doc[0].path : '';
+      // Upload from local disk to Cloudinary
+      const aadharUrl = await uploadToCloudinary(req.files.aadhar_doc[0].path, 'learningfox/reg_docs');
+      const resumeUrl = req.files.resume_doc
+        ? await uploadToCloudinary(req.files.resume_doc[0].path, 'learningfox/reg_docs')
+        : '';
       await client.query(
         `INSERT INTO teacher_profiles
            (agency_id, user_id, aadhar_doc, resume_doc, class_from, class_to, subjects_taught, languages, education, skills, bio)
