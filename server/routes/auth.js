@@ -56,6 +56,10 @@ router.post('/register', (req, res, next) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
   // Role-specific validation
+  // Debug: log what files arrived
+  console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
+  console.log('Body keys:', Object.keys(req.body));
+
   if (role === 'teacher') {
     if (!req.files?.aadhar_doc)
       return res.status(400).json({ error: 'Aadhar card document is required' });
