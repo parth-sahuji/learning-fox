@@ -285,7 +285,15 @@ export default function Register() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="label">Class From *</label>
-                  <select className="input" value={form.teach_class_from} onChange={e => setForm(f => ({ ...f, teach_class_from: e.target.value }))}>
+                  <select className="input" value={form.teach_class_from} onChange={e => {
+                    const val = e.target.value;
+                    setForm(f => ({
+                      ...f,
+                      teach_class_from: val,
+                      // Reset "to" if it's now less than "from"
+                      teach_class_to: f.teach_class_to && parseInt(f.teach_class_to) < parseInt(val) ? val : f.teach_class_to,
+                    }));
+                  }}>
                     <option value="">From</option>
                     {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
                   </select>
@@ -294,7 +302,10 @@ export default function Register() {
                   <label className="label">Class To *</label>
                   <select className="input" value={form.teach_class_to} onChange={e => setForm(f => ({ ...f, teach_class_to: e.target.value }))}>
                     <option value="">To</option>
-                    {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+                    {/* Only show classes >= teach_class_from */}
+                    {CLASSES.filter(c => !form.teach_class_from || parseInt(c) >= parseInt(form.teach_class_from)).map(c => (
+                      <option key={c} value={c}>Class {c}</option>
+                    ))}
                   </select>
                 </div>
               </div>

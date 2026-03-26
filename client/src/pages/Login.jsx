@@ -62,7 +62,7 @@ export default function Login() {
 
         {/* Card */}
         <div className="card shadow-2xl border-2 border-brand-100 dark:border-brand-900"
-          style={{ backdropFilter: 'blur(16px)', background: 'rgba(255,255,255,0.92)' }}>
+          style={{ backdropFilter: 'blur(20px)', background: 'rgba(30,20,9,0.95)', border: '1px solid rgba(239,117,32,0.3)' }}>
 
           <h2 className="font-display text-2xl font-bold text-center text-[var(--text-primary)] mb-6">
             Welcome Back! 👋

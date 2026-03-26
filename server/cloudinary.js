@@ -37,12 +37,18 @@ const portfolioStorage = new CloudinaryStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = [
-    'application/pdf',
+  const allowedMimes = [
+    'application/pdf', 'application/octet-stream',
     'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
   ];
-  if (allowed.includes(file.mimetype)) cb(null, true);
-  else cb(new Error('Only PDF and image files are allowed'), false);
+  const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.gif'];
+  const ext = require('path').extname(file.originalname).toLowerCase();
+  // Accept if mime matches OR extension matches (handles browser inconsistencies)
+  if (allowedMimes.includes(file.mimetype) || allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only PDF and image files are allowed'), false);
+  }
 };
 
 const uploadRegDocs = multer({
