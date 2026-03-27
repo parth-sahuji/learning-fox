@@ -171,11 +171,11 @@ export default function Register() {
           ].map(r => (
             <button key={r.v} type="button" onClick={() => { setRole(r.v); setStep(1); setError(''); }}
               className={`p-4 rounded-2xl border-2 text-left transition-all ${role === r.v
-                ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 shadow-md'
+                ? 'border-brand-500 bg-brand-500 shadow-md'
                 : 'border-[var(--border)] hover:border-brand-300 bg-[var(--bg-card)]'}`}>
               <div className="text-2xl mb-1">{r.icon}</div>
-              <div className="font-bold text-sm text-[var(--text-primary)]">{r.label}</div>
-              <div className="text-xs text-[var(--text-secondary)]">{r.sub}</div>
+              <div className={`font-bold text-sm ${role === r.v ? 'text-white' : 'text-[var(--text-primary)]'}`}>{r.label}</div>
+              <div className={`text-xs ${role === r.v ? 'text-white/80' : 'text-[var(--text-secondary)]'}`}>{r.sub}</div>
             </button>
           ))}
         </div>

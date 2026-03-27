@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
 const { JWT_SECRET, authenticate } = require('../middleware/auth');
-const { uploadRegDocs, uploadToCloudinary } = require('../cloudinary');
+const { uploadRegDocs, uploadBufferToCloudinary } = require('../cloudinary');
 
 const router = express.Router();
 
@@ -282,8 +282,6 @@ router.post('/register/student', async (req, res) => {
 
 // POST /api/auth/upload-doc — upload file to Cloudinary via memory buffer
 // Uses manual upload to avoid multer-storage-cloudinary issues in production
-const { uploadRegDocs, uploadBufferToCloudinary } = require('../cloudinary');
-
 router.post('/upload-doc', (req, res) => {
   uploadRegDocs(req, res, async (err) => {
     if (err) {
