@@ -39,7 +39,7 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in relative">
       {toast && (
         <div className={`fixed top-16 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white
           ${toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'} animate-slide-up`}>
@@ -107,7 +107,7 @@ export default function StudentDashboard() {
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-[var(--text-secondary)]">Monthly Fee:</span>
                         <span className="text-lg font-bold font-display text-emerald-600 dark:text-emerald-400">
-                          ₹{parseFloat(a.monthly_fee).toLocaleString('en-IN')}
+                          ₹{parseFloat(a.monthly_fee || 0).toLocaleString('en-IN')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -153,11 +153,11 @@ export default function StudentDashboard() {
                     )}
                   </div>
 
-                  {a.available_slots?.length > 0 && (
+                  {Array.isArray(a.available_slots) && a.available_slots.length > 0 && (
                     <div className="mt-4">
                       <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2">🕐 Available Slots</p>
                       <div className="flex flex-wrap gap-2">
-                        {a.available_slots.map((slot, i) => (
+                        {(a.available_slots || []).map((slot, i) => (
                           <span key={i} className="text-xs px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                             {slot.day} · {slot.from}–{slot.to}
                           </span>

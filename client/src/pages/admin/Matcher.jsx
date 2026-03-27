@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api';
 
-const SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History',
-  'Geography', 'Computer Science', 'Economics', 'Accounts', 'Business Studies', 'Sanskrit', 'Other'];
+const SUBJECTS = ['All Subjects', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History', 'Geography', 'Computer Science', 'Economics', 'Accounts', 'Business Studies', 'Sanskrit', 'Science', 'Other'];
 
 export default function Matcher() {
   const [students, setStudents] = useState([]);

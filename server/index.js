@@ -12,6 +12,40 @@ const PORT = process.env.PORT || 5001;
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',').map(s => s.trim());
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow Cloudinary images
+  contentSecurityPolicy: false, // disabled to not break frontend
+}));
+
+// Rate limiting — 100 requests per 15 min per IP globally
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
+
+// Strict rate limit on login — 10 attempts per 15 min
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts. Please wait 15 minutes.' },
+});
+app.use('/api/auth/login', loginLimiter);
+
+// Strict rate limit on register — 5 per hour
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many registration attempts. Please try again later.' },
+});
+app.use('/api/auth/register', registerLimiter);
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) cb(null, true);

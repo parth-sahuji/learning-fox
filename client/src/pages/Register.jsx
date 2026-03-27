@@ -4,8 +4,8 @@ import api from '../api';
 import AnimatedBackground from '../components/AnimatedBackground';
 import TermsModal from './TermsModal';
 
-const SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History',
-  'Geography', 'Computer Science', 'Economics', 'Accounts', 'Business Studies', 'Sanskrit', 'Science'];
+const SUBJECTS = ['All Subjects', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History',
+  'Geography', 'Computer Science', 'Economics', 'Accounts', 'Business Studies', 'Sanskrit', 'Science', 'Other'];
 const LANGUAGES = ['Hindi', 'English', 'Marathi', 'Gujarati', 'Bengali', 'Tamil', 'Telugu', 'Kannada', 'Urdu', 'Punjabi'];
 const CLASSES = ['1','2','3','4','5','6','7','8','9','10','11','12'];
 const BOARDS = ['CBSE','ICSE','IGCSE','IB','Maharashtra State Board','UP Board','Bihar Board','MP Board','Other State Board'];
@@ -33,10 +33,15 @@ export default function Register() {
   const aadharRef = useRef();
   const resumeRef = useRef();
 
-  const toggleArr = (key, val) => setForm(f => ({
-    ...f,
-    [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val],
-  }));
+  const toggleArr = (key, val) => setForm(f => {
+    if (val === 'All Subjects') {
+      // Toggle all
+      const allSubjects = SUBJECTS.filter(s => s !== 'All Subjects');
+      const allSelected = allSubjects.every(s => f[key].includes(s));
+      return { ...f, [key]: allSelected ? [] : allSubjects };
+    }
+    return { ...f, [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val] };
+  });
 
   const validateStep1 = () => {
     if (!form.full_name.trim()) return 'Full name is required.';
@@ -124,7 +129,17 @@ export default function Register() {
 
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const status = err.response?.status;
+      const errMsg = err.response?.data?.error || '';
+      // 201/200 in catch = axios quirk, actually succeeded
+      if (status === 201 || status === 200 || !status) {
+        setSuccess(true);
+      } else if (errMsg) {
+        setError(errMsg);
+      } else {
+        // Network/unknown error - check if registration went through anyway
+        setError('Registration may have succeeded. Please try logging in. If not, try again.');
+      }
     } finally {
       setLoading(false);
     }

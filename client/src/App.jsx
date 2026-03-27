@@ -7,6 +7,7 @@ import WhatsAppFloat from './components/WhatsAppFloat';
 import Layout from './components/Layout';
 
 import Login         from './pages/Login';
+import About         from './pages/About';
 import Register      from './pages/Register';
 import PendingApproval from './pages/PendingApproval';
 import Terms         from './pages/Terms';
@@ -37,6 +38,7 @@ export default function App() {
           <WhatsAppFloat />
           <Routes>
             <Route path="/terms"    element={<Terms />} />
+            <Route path="/about"    element={<About />} />
             <Route path="/pending"  element={<PendingApproval />} />
             <Route path="/rejected" element={<PendingApproval />} />
 
@@ -77,7 +79,7 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<About />} />
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center" style={{ paddingTop: '56px', background: '#0f0a06' }}>
                 <div className="text-center">

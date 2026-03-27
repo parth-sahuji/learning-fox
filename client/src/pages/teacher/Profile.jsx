@@ -1,10 +1,49 @@
-import { useState, useEffect } from 'react';
+
+function DocUpload({ label, field, endpoint, current }) {
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [done, setDone] = useState(!!current);
+  const [url, setUrl] = useState(current || '');
+  const ref = useRef(null);
+
+  const upload = async (f) => {
+    if (!f) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append(field, f);
+      const r = await api.put ? api.post(endpoint, fd) : api.post(endpoint, fd);
+      setDone(true); setUrl(r.data.url || '');
+    } catch(e) {
+      alert(e.response?.data?.error || 'Upload failed');
+    } finally { setUploading(false); }
+  };
+
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <div className="flex items-center gap-3">
+        <div onClick={() => ref.current?.click()}
+          className={`flex-1 border-2 border-dashed rounded-xl p-3 cursor-pointer text-center transition-all text-sm
+            ${done ? 'border-emerald-500 bg-emerald-900/20' : 'border-[var(--border)] hover:border-brand-400'}`}>
+          <input ref={ref} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+            onChange={e => { setFile(e.target.files[0]); upload(e.target.files[0]); }} />
+          {uploading ? '⏳ Uploading...' : done ? '✅ Uploaded' : 'Click to upload'}
+        </div>
+        {url && <a href={url} target="_blank" rel="noopener noreferrer"
+          className="text-xs px-3 py-2 rounded-lg bg-brand-900/40 text-brand-300 border border-brand-700/40">View</a>}
+      </div>
+    </div>
+  );
+}
+
+import { useState, useEffect, useRef } from 'react';
 import api from '../../api';
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const TIMES = ['6:00 AM','7:00 AM','8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM','7:00 PM','8:00 PM'];
 const CLASSES = ['1','2','3','4','5','6','7','8','9','10','11','12','College/UG'];
-const SUBJECTS_LIST = ['Mathematics','Physics','Chemistry','Biology','English','Hindi','History','Geography','Computer Science','Economics','Accounts','Business Studies','Sanskrit','Marathi','Science'];
+const SUBJECTS_LIST = ['All Subjects', 'Mathematics','Physics','Chemistry','Biology','English','Hindi','History','Geography','Computer Science','Economics','Accounts','Business Studies','Sanskrit','Marathi','Science'];
 const LANGUAGES = ['Hindi','English','Marathi','Bengali','Tamil','Telugu','Gujarati','Kannada','Punjabi','Other'];
 
 export default function TeacherProfile() {
@@ -152,6 +191,18 @@ export default function TeacherProfile() {
                 ))}
               </div>
           }
+        </div>
+
+
+        {/* Documents */}
+        <div className="card space-y-4">
+          <h2 className="font-semibold text-[var(--text-primary)] flex items-center gap-2 text-sm">
+            <span className="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs">📄</span>
+            Verification Documents
+          </h2>
+          <p className="text-xs text-[var(--text-secondary)]">Upload your Aadhar card and Resume for admin verification. Admin will approve your profile after review.</p>
+          <DocUpload label="🪪 Aadhar Card" field="aadhar_doc" endpoint="/teacher/upload-aadhar" current={form.aadhar_doc} />
+          <DocUpload label="📋 Resume / CV" field="resume_doc" endpoint="/teacher/upload-resume" current={form.resume_doc} />
         </div>
 
         <button type="submit" className="btn-primary w-full" disabled={saving}>{saving?'Saving...':'💾 Save Profile'}</button>

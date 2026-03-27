@@ -3,7 +3,7 @@ import api from '../../api';
 
 const CLASSES = ['1','2','3','4','5','6','7','8','9','10','11','12','College/UG'];
 const BOARDS = ['CBSE','ICSE','IGCSE','IB','Maharashtra State Board','UP Board','Bihar Board','MP Board','Other State Board'];
-const SUBJECTS_LIST = ['Mathematics','Physics','Chemistry','Biology','English','Hindi','History','Geography','Computer Science','Economics','Accounts','Business Studies','Sanskrit','Marathi','Science'];
+const SUBJECTS_LIST = ['All Subjects', 'Mathematics','Physics','Chemistry','Biology','English','Hindi','History','Geography','Computer Science','Economics','Accounts','Business Studies','Sanskrit','Marathi','Science'];
 
 export default function StudentProfile() {
   const [user, setUser] = useState({});

@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole, requireApproved } = require('../middleware/auth');
-const { uploadPortfolio, cloudinary, uploadToCloudinary } = require('../cloudinary');
+const { uploadPortfolio, cloudinary, uploadBufferToCloudinary } = require('../cloudinary');
 
 const router = express.Router();
 router.use(authenticate, requireRole('teacher'));
@@ -95,12 +95,13 @@ router.post('/portfolio', requireApproved, (req, res, next) => {
     const existingDocs = existing.rows[0]?.portfolio_docs || [];
     // Upload each file from disk to Cloudinary
     const newDocs = await Promise.all(req.files.map(async f => {
-      const url = await uploadToCloudinary(f.path, 'learningfox/portfolio');
+      const url = await uploadBufferToCloudinary(f.buffer, 'learningfox/portfolio', f.originalname);
+      const safeName = Date.now() + '_' + f.originalname.replace(/[^a-zA-Z0-9._-]/g,'_');
       return {
-        filename:     f.filename,
+        filename:     safeName,
         originalname: f.originalname,
         url,
-        public_id:    f.filename,
+        public_id:    url,
         mimetype:     f.mimetype,
         size:         f.size,
         uploaded_at:  new Date().toISOString(),
@@ -198,6 +199,62 @@ router.get('/fees', requireApproved, async (req, res) => {
       [teacher_id, agency_id]
     );
     res.json({ fee_records: r.rows });
+  } finally { client.release(); }
+});
+
+
+// POST /api/teacher/upload-aadhar — upload Aadhar after registration
+router.post('/upload-aadhar', requireApproved, (req, res, next) => {
+  const { uploadRegDocs } = require('../cloudinary');
+  uploadRegDocs(req, res, next);
+}, async (req, res) => {
+  const { id: user_id, agency_id } = req.user;
+  const files = req.files || {};
+  if (!files.aadhar_doc?.[0]) return res.status(400).json({ error: 'No file received' });
+  const client = await pool.connect();
+  try {
+    const { uploadBufferToCloudinary } = require('../cloudinary');
+    const url = await uploadBufferToCloudinary(
+      files.aadhar_doc[0].buffer,
+      'learningfox/reg_docs',
+      files.aadhar_doc[0].originalname
+    );
+    await client.query(
+      `INSERT INTO teacher_profiles (agency_id, user_id, aadhar_doc)
+       VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET aadhar_doc=$3, updated_at=NOW()`,
+      [agency_id, user_id, url]
+    );
+    res.json({ message: 'Aadhar uploaded successfully', url });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ error: 'Upload failed' });
+  } finally { client.release(); }
+});
+
+
+// POST /api/teacher/upload-resume
+router.post('/upload-resume', requireApproved, (req, res, next) => {
+  const { uploadRegDocs } = require('../cloudinary');
+  uploadRegDocs(req, res, next);
+}, async (req, res) => {
+  const { id: user_id, agency_id } = req.user;
+  const files = req.files || {};
+  const fileKey = files.aadhar_doc?.[0] ? 'aadhar_doc' : files.resume_doc?.[0] ? 'resume_doc' : null;
+  if (!fileKey) return res.status(400).json({ error: 'No file received' });
+  const client = await pool.connect();
+  try {
+    const { uploadBufferToCloudinary } = require('../cloudinary');
+    const url = await uploadBufferToCloudinary(
+      files[fileKey][0].buffer, 'learningfox/reg_docs', files[fileKey][0].originalname
+    );
+    await client.query(
+      `INSERT INTO teacher_profiles (agency_id, user_id, resume_doc)
+       VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET resume_doc=$3, updated_at=NOW()`,
+      [agency_id, user_id, url]
+    );
+    res.json({ message: 'Resume uploaded successfully', url });
+  } catch(err) {
+    res.status(500).json({ error: 'Upload failed' });
   } finally { client.release(); }
 });
 

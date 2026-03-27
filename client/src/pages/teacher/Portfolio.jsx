@@ -41,9 +41,7 @@ export default function Portfolio() {
     Array.from(files).forEach(f => formData.append('files', f));
     setUploading(true);
     try {
-      const r = await api.post('/teacher/portfolio', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const r = await api.post('/teacher/portfolio', formData); // let axios set Content-Type+boundary
       setDocs(r.data.docs);
       showToast(`${files.length} file(s) uploaded successfully!`);
     } catch (err) {

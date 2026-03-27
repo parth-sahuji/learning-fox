@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
   teach_class_to VARCHAR(10),
   available_slots JSONB DEFAULT '[]',
   portfolio_docs JSONB DEFAULT '[]',
-  aadhar_doc JSONB,
-  resume_doc JSONB,
+  aadhar_doc TEXT,
+  resume_doc TEXT,
   bio TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -103,8 +103,10 @@ DO $$ BEGIN
   BEGIN ALTER TABLE teacher_profiles ADD COLUMN languages TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
   BEGIN ALTER TABLE teacher_profiles ADD COLUMN teach_class_from VARCHAR(10); EXCEPTION WHEN duplicate_column THEN NULL; END;
   BEGIN ALTER TABLE teacher_profiles ADD COLUMN teach_class_to VARCHAR(10); EXCEPTION WHEN duplicate_column THEN NULL; END;
-  BEGIN ALTER TABLE teacher_profiles ADD COLUMN aadhar_doc JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
-  BEGIN ALTER TABLE teacher_profiles ADD COLUMN resume_doc JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
+  BEGIN ALTER TABLE teacher_profiles ADD COLUMN aadhar_doc TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+  BEGIN ALTER TABLE teacher_profiles ALTER COLUMN aadhar_doc TYPE TEXT USING aadhar_doc::TEXT; EXCEPTION WHEN others THEN NULL; END;
+  BEGIN ALTER TABLE teacher_profiles ADD COLUMN resume_doc TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+  BEGIN ALTER TABLE teacher_profiles ALTER COLUMN resume_doc TYPE TEXT USING resume_doc::TEXT; EXCEPTION WHEN others THEN NULL; END;
   BEGIN ALTER TABLE student_profiles ADD COLUMN address TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
   BEGIN ALTER TABLE student_profiles ADD COLUMN days_per_week INTEGER DEFAULT 3; EXCEPTION WHEN duplicate_column THEN NULL; END;
 END $$;
