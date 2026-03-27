@@ -1,3 +1,4 @@
+const { approvalEmail } = require('../email');
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole } = require('../middleware/auth');
@@ -66,6 +67,11 @@ router.put('/users/:id/approve', async (req, res) => {
        VALUES ($1, $2, 'Account Approved', 'Your account has been approved! You can now access your dashboard.', 'success')`,
       [agency_id, req.params.id]
     );
+
+    // Send approval email (non-blocking)
+    if (result.rows[0]) {
+      approvalEmail({ full_name: result.rows[0].full_name, email: result.rows[0].email, role: result.rows[0].role }).catch(() => {});
+    }
 
     res.json({ user: result.rows[0] });
   } finally {

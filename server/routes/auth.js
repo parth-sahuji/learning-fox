@@ -1,3 +1,4 @@
+const { welcomeStudentEmail, welcomeTeacherEmail, notifyAdminNewUser } = require('../email');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -266,6 +267,10 @@ router.post('/register/student', async (req, res) => {
        school_board || '', locality || '']
     );
 
+    // Send welcome email and admin notification (non-blocking)
+    welcomeStudentEmail({ full_name, email: email.toLowerCase() }).catch(() => {});
+    notifyAdminNewUser({ full_name, email: email.toLowerCase(), role: 'Student', phone }).catch(() => {});
+
     res.status(201).json({
       message: 'Registration successful. Please wait for admin approval.',
       user: { id: user.id, email: user.email, role: user.role, status: user.status },
@@ -374,6 +379,10 @@ router.post('/register/teacher', async (req, res) => {
        subjects, languages,
        education || '', skills || '', bio || '']
     );
+
+    // Send welcome email and admin notification (non-blocking)
+    welcomeTeacherEmail({ full_name, email: email.toLowerCase() }).catch(() => {});
+    notifyAdminNewUser({ full_name, email: email.toLowerCase(), role: 'Teacher', phone }).catch(() => {});
 
     res.status(201).json({
       message: 'Registration successful. Please wait for admin approval.',

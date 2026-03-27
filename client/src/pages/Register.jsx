@@ -28,6 +28,7 @@ export default function Register() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [error, setError] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const aadharRef = useRef();
@@ -235,13 +236,21 @@ export default function Register() {
                 </div>
                 <div>
                   <label className="label">Password *</label>
-                  <input type="password" className="input" placeholder="Min 6 characters"
-                    value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                  <div className="relative">
+                    <input type={showPwd ? 'text' : 'password'} className="input pr-12" placeholder="Min 6 characters"
+                      value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                    <button type="button" onClick={() => setShowPwd(s => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm">
+                      {showPwd ? '🙈' : '👁️'}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="label">Confirm Password *</label>
-                  <input type="password" className="input" placeholder="Repeat password"
-                    value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} />
+                  <div className="relative">
+                    <input type={showPwd ? 'text' : 'password'} className="input pr-12" placeholder="Repeat password"
+                      value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} />
+                  </div>
                 </div>
               </div>
               <button type="button" onClick={goToStep2} className="btn-primary w-full mt-2">

@@ -15,42 +15,48 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Trust Render/proxy so real client IPs are used for rate limiting
-// Without this, ALL users appear as the same IP (Render's proxy) and get blocked together
+// Trust Render proxy (required for correct IP detection)
 app.set('trust proxy', 1);
 
-// Security headers
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false,
-}));
-
-// Rate limiting — per real IP, generous limits for normal use
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 30,                    // 30 login attempts per IP per 15 min (plenty for real users)
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many login attempts from this device. Please wait 15 minutes.' },
-});
-app.use('/api/auth/login', loginLimiter);
-
-const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,  // 1 hour
-  max: 20,                    // 20 registrations per IP per hour
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many registrations from this device. Please try again later.' },
-});
-app.use('/api/auth/register', registerLimiter);
-
-app.use(cors({
+// CORS must come FIRST — before rate limiting
+// Otherwise rate limit error responses have no CORS headers and browser rejects them
+const corsOptions = {
   origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) cb(null, true);
     else cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Security headers (after CORS)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
 }));
+
+// Rate limiting — AFTER cors so error responses include CORS headers
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Too many login attempts. Please wait 15 minutes.' });
+  },
+});
+app.use('/api/auth/login', loginLimiter);
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Too many registrations. Please try again later.' });
+  },
+});
+app.use('/api/auth/register', registerLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
