@@ -55,11 +55,11 @@ export default function StickyHeader() {
 
           {/* LEFT: Logo + Brand */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <img src="/fox-logo.png" alt="Learning Fox"
+            <img src="/fox-logo.png" alt="Learning Foxx"
               className="h-10 w-10 rounded-full object-cover border-2 border-white/40 shadow-lg" />
             <span className="font-display font-bold text-white text-base hidden sm:block"
               style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
-              Learning Fox
+              Learning Foxx
             </span>
           </div>
 

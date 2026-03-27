@@ -49,7 +49,7 @@ export default function Register() {
 
   const validateStep2 = () => {
     if (role === 'teacher') {
-      if (!aadharFile) return 'Aadhar card document is required.';
+      // Aadhar upload removed - admin collects separately
       if (!form.subjects.length) return 'Please select at least one subject you can teach.';
       if (!form.languages.length) return 'Please select at least one language.';
       if (!form.teach_class_from || !form.teach_class_to) return 'Please specify the class range you can teach.';
@@ -84,12 +84,9 @@ export default function Register() {
       let response;
 
       if (role === 'teacher') {
-        // Step 1: Upload files first to get Cloudinary URLs
-        const uploadFd = new FormData();
-        uploadFd.append('aadhar_doc', aadharFile);
-        if (resumeFile) uploadFd.append('resume_doc', resumeFile);
-        const uploadRes = await api.post('/auth/upload-doc', uploadFd);
-        const { aadhar_url, resume_url } = uploadRes.data;
+        // No file upload step needed - Aadhar collected by admin separately
+        const aadhar_url = '';
+        const resume_url = '';
 
         // Step 2: Register with JSON (files already uploaded)
         response = await api.post('/auth/register/teacher', {
@@ -137,7 +134,7 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg-primary)] relative">
       <AnimatedBackground />
       <div className="w-full max-w-md card text-center z-10 shadow-xl animate-slide-up">
-        <img src="/fox-logo.png" alt="Learning Fox" className="w-20 h-20 mx-auto object-contain mb-3" />
+        <img src="/fox-logo.png" alt="Learning Foxx" className="w-20 h-20 mx-auto object-contain mb-3" />
         <div className="text-4xl mb-2">🎉</div>
         <h2 className="font-display text-2xl font-extrabold text-[var(--text-primary)] mb-2">You're Registered!</h2>
         <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
@@ -158,8 +155,8 @@ export default function Register() {
       <div className="w-full max-w-xl relative z-10 animate-slide-up">
         {/* Header */}
         <div className="text-center mb-6">
-          <img src="/fox-logo.png" alt="Learning Fox" className="w-16 h-16 mx-auto object-contain mb-2" />
-          <h1 className="font-display text-2xl font-extrabold text-[var(--text-primary)]">Join Learning Fox</h1>
+          <img src="/fox-logo.png" alt="Learning Foxx" className="w-16 h-16 mx-auto object-contain mb-2" />
+          <h1 className="font-display text-2xl font-extrabold text-[var(--text-primary)]">Join Learning Foxx</h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">India's best home tutor platform</p>
         </div>
 
@@ -243,20 +240,10 @@ export default function Register() {
             <div className="space-y-5">
               <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">Teacher Details</h3>
 
-              {/* Aadhar */}
-              <div>
-                <label className="label">🪪 Aadhar Card * <span className="text-red-500 text-xs">(required for verification)</span></label>
-                <div onClick={() => aadharRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-4 cursor-pointer text-center transition-all
-                    ${aadharFile ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20' : 'border-[var(--border)] hover:border-brand-400 hover:bg-[var(--bg-secondary)]'}`}>
-                  <input ref={aadharRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={e => setAadharFile(e.target.files[0])} />
-                  <div className="text-2xl mb-1">{aadharFile ? '✅' : '📄'}</div>
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">
-                    {aadharFile ? aadharFile.name : 'Upload Aadhar Card (PDF or Image)'}
-                  </p>
-                  <p className="text-xs text-[var(--text-secondary)]">Max 10MB · PDF, JPG, PNG</p>
-                </div>
+              {/* Aadhar - collected by admin via WhatsApp */}
+              <div className="p-3 rounded-xl bg-amber-900/20 border border-amber-700/40">
+                <p className="text-sm font-semibold text-amber-400 mb-1">🪪 Aadhar Verification</p>
+                <p className="text-xs text-amber-300/80">The admin will contact you on WhatsApp to collect your Aadhar card for verification after registration.</p>
               </div>
 
               {/* Resume */}
@@ -454,7 +441,7 @@ export default function Register() {
               <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700">
                 <p className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-3">⚠️ Important — Please Read</p>
                 <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1.5 mb-3">
-                  <li>• Learning Fox is NOT responsible for offline arrangements made outside this platform.</li>
+                  <li>• Learning Foxx is NOT responsible for offline arrangements made outside this platform.</li>
                   <li>• If teacher and student make direct contact offline, the platform bears NO responsibility.</li>
                   <li>• If any monthly fee is skipped, the platform owner is NOT responsible.</li>
                   <li>• All fee payments must be confirmed through this platform.</li>
@@ -474,7 +461,7 @@ export default function Register() {
                   </div>
                 </div>
                 <span className="text-sm text-[var(--text-primary)] leading-relaxed">
-                  I have read and agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-brand-500 font-bold underline">Terms & Conditions</button> of Learning Fox. I understand that the platform is not responsible for offline arrangements or missed payments.
+                  I have read and agree to the <button type="button" onClick={() => setShowTerms(true)} className="text-brand-500 font-bold underline">Terms & Conditions</button> of Learning Foxx. I understand that the platform is not responsible for offline arrangements or missed payments.
                 </span>
               </label>
 

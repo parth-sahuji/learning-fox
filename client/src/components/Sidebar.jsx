@@ -42,10 +42,10 @@ export default function Sidebar({ mobile, onClose }) {
       {/* Brand header */}
       <div className={`p-5 bg-gradient-to-br ${roleGradient[user?.role] || roleGradient.student}`}>
         <div className="flex items-center gap-3">
-          <img src="/fox-logo.png" alt="Learning Fox"
+          <img src="/fox-logo.png" alt="Learning Foxx"
             className="w-11 h-11 rounded-xl object-cover border-2 border-white/30 shadow-lg" />
           <div>
-            <h1 className="font-display text-lg font-bold text-white leading-tight">Learning Fox</h1>
+            <h1 className="font-display text-lg font-bold text-white leading-tight">Learning Foxx</h1>
             <p className="text-xs text-white/60">Tuition Platform</p>
           </div>
         </div>

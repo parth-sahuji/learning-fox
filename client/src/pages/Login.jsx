@@ -38,7 +38,7 @@ export default function Login() {
           <div className="inline-block relative">
             <img
               src="/fox-logo.png"
-              alt="Learning Fox"
+              alt="Learning Foxx"
               className="mx-auto object-contain"
               style={{
                 width: '160px',
@@ -53,7 +53,7 @@ export default function Login() {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
-            Learning Fox
+            Learning Foxx
           </h1>
           <p className="text-[var(--text-secondary)] mt-1 text-sm font-medium">
             🏆 India's Best Home Tuition Platform

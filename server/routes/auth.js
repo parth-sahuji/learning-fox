@@ -61,8 +61,7 @@ router.post('/register', (req, res, next) => {
   console.log('Body keys:', Object.keys(req.body));
 
   if (role === 'teacher') {
-    if (!req.files?.aadhar_doc)
-      return res.status(400).json({ error: 'Aadhar card document is required' });
+    // Aadhar optional
     if (!subjects_taught)
       return res.status(400).json({ error: 'Please specify subjects you can teach' });
     if (!languages)
@@ -340,8 +339,7 @@ router.post('/register/teacher', async (req, res) => {
     return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
   if (password.length < 6)
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  if (!aadhar_url)
-    return res.status(400).json({ error: 'Aadhar card document is required' });
+  // Aadhar is optional - admin can collect separately
   if (!subjects)
     return res.status(400).json({ error: 'Please specify subjects you can teach' });
   if (!languages)

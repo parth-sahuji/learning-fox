@@ -9,7 +9,7 @@ export default function PendingApproval() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg-primary)]" style={{paddingTop:'68px'}}>
       <div className="w-full max-w-md card text-center animate-slide-up">
-        <img src="/fox-logo.png" alt="Learning Fox" className="w-20 h-20 mx-auto object-contain mb-4" />
+        <img src="/fox-logo.png" alt="Learning Foxx" className="w-20 h-20 mx-auto object-contain mb-4" />
         <div className="text-4xl mb-3">{isRejected ? '❌' : '⏳'}</div>
         <h2 className="font-display text-2xl font-bold text-[var(--text-primary)] mb-2">
           {isRejected ? 'Account Not Approved' : 'Awaiting Admin Approval'}
