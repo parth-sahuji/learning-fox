@@ -15,34 +15,32 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+// Trust Render/proxy so real client IPs are used for rate limiting
+// Without this, ALL users appear as the same IP (Render's proxy) and get blocked together
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow Cloudinary images
-  contentSecurityPolicy: false, // disabled to not break frontend
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
 }));
 
-// Rate limiting — 100 requests per 15 min per IP globally
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'Too many requests, please try again later.' },
+// Rate limiting — per real IP, generous limits for normal use
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 30,                    // 30 login attempts per IP per 15 min (plenty for real users)
   standardHeaders: true,
   legacyHeaders: false,
-}));
-
-// Strict rate limit on login — 10 attempts per 15 min
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { error: 'Too many login attempts. Please wait 15 minutes.' },
+  message: { error: 'Too many login attempts from this device. Please wait 15 minutes.' },
 });
 app.use('/api/auth/login', loginLimiter);
 
-// Strict rate limit on register — 5 per hour
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  message: { error: 'Too many registration attempts. Please try again later.' },
+  windowMs: 60 * 60 * 1000,  // 1 hour
+  max: 20,                    // 20 registrations per IP per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many registrations from this device. Please try again later.' },
 });
 app.use('/api/auth/register', registerLimiter);
 
