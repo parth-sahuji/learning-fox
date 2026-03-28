@@ -1,10 +1,16 @@
 import axios from 'axios';
 
-// Always use /api — Vercel proxies it to Render via vercel.json
-// This works in dev (Vite proxy) and production (Vercel proxy) without any env vars needed
+// Directly point to Render backend in production
+// Vercel proxy rewrites don't work reliably for POST/multipart requests
+const RENDER_URL = 'https://learning-fox-api.onrender.com';
+
+const isLocalDev = window.location.hostname === 'localhost';
+const baseURL = isLocalDev ? '/api' : `${RENDER_URL}/api`;
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 60000, // 60 second timeout (Render cold start can take 30s)
 });
 
 api.interceptors.request.use(config => {
