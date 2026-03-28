@@ -29,9 +29,12 @@ const uploadPortfolio = multer({
 // Helper: upload a buffer to Cloudinary, returns secure_url
 function uploadBufferToCloudinary(buffer, folder, originalname) {
   return new Promise((resolve, reject) => {
+    // 30 second timeout for Cloudinary upload
+    const timer = setTimeout(() => reject(new Error('Cloudinary upload timed out after 30s')), 30000);
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder, resource_type: 'auto' },
       (error, result) => {
+        clearTimeout(timer);
         if (error) return reject(error);
         resolve(result.secure_url);
       }

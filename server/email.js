@@ -12,7 +12,10 @@ async function sendEmail({ to, subject, html }) {
     return;
   }
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); // 8 sec timeout
     const res = await fetch('https://api.resend.com/emails', {
+      signal: controller.signal,
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -20,6 +23,7 @@ async function sendEmail({ to, subject, html }) {
       },
       body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
     });
+    clearTimeout(timeout);
     const data = await res.json();
     if (res.ok) console.log(`✅ Email sent: ${subject} → ${to}`);
     else console.error('Email error:', data);
