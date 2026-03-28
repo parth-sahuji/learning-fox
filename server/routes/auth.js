@@ -243,11 +243,13 @@ router.post('/register/student', async (req, res) => {
   const client = await pool.connect();
   try {
     const existing = await client.query(
-      'SELECT id FROM users WHERE email=$1 AND agency_id=$2',
+      'SELECT id, role FROM users WHERE email=$1 AND agency_id=$2',
       [email.toLowerCase(), agency_id]
     );
-    if (existing.rows.length > 0)
-      return res.status(409).json({ error: 'This email is already registered. Please login or use a different email.' });
+    if (existing.rows.length > 0) {
+      const existingRole = existing.rows[0].role;
+      return res.status(409).json({ error: `This email is already registered as a ${existingRole}. Please login or use a different email.` });
+    }
 
     const hash = await bcrypt.hash(password, 12);
     const result = await client.query(
@@ -353,11 +355,13 @@ router.post('/register/teacher', async (req, res) => {
   const client = await pool.connect();
   try {
     const existing = await client.query(
-      'SELECT id FROM users WHERE email=$1 AND agency_id=$2',
+      'SELECT id, role FROM users WHERE email=$1 AND agency_id=$2',
       [email.toLowerCase(), agency_id]
     );
-    if (existing.rows.length > 0)
-      return res.status(409).json({ error: 'Email already registered. Please use a different email or login.' });
+    if (existing.rows.length > 0) {
+      const existingRole = existing.rows[0].role;
+      return res.status(409).json({ error: `This email is already registered as a ${existingRole}. Please login or use a different email.` });
+    }
 
     const hash = await bcrypt.hash(password, 12);
     const result = await client.query(
@@ -391,6 +395,89 @@ router.post('/register/teacher', async (req, res) => {
   } catch (err) {
     console.error('Teacher registration error:', err);
     res.status(500).json({ error: 'Registration failed. Please try again.' });
+  } finally { client.release(); }
+});
+
+
+// In-memory token store (use Redis in production for multi-instance)
+const resetTokens = new Map(); // token -> { email, agency_id, expires }
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+  const { email, agency_id = 'default' } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      'SELECT id, email, full_name FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+
+    // Always return success (don't reveal if email exists)
+    res.json({ message: 'If that email is registered, a reset link has been sent.' });
+
+    if (result.rows.length === 0) return;
+
+    const user = result.rows[0];
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const expires = Date.now() + 60 * 60 * 1000; // 1 hour
+    resetTokens.set(token, { email: email.toLowerCase(), agency_id, expires });
+
+    const resetLink = `${process.env.CLIENT_URL?.split(',')[0] || 'https://learningfoxx.com'}/reset-password?token=${token}`;
+
+    const { approvalEmail: _, ...emailModule } = require('../email');
+    if (emailModule.sendResetEmail) {
+      emailModule.sendResetEmail({ full_name: user.full_name, email: user.email, resetLink }).catch(() => {});
+    } else {
+      // Fallback: use nodemailer directly
+      const nodemailer = require('nodemailer');
+      if (process.env.GMAIL_APP_PASSWORD) {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: process.env.GMAIL_USER || 'learningfoxx4u@gmail.com', pass: process.env.GMAIL_APP_PASSWORD },
+        });
+        transporter.sendMail({
+          from: `"Learning Foxx" <${process.env.GMAIL_USER || 'learningfoxx4u@gmail.com'}>`,
+          to: user.email,
+          subject: '🔐 Reset Your Learning Foxx Password',
+          html: `<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:32px;background:#1a0f05;color:#fdf0e8;border-radius:16px;">
+            <h2 style="color:#f97316;">Reset Your Password</h2>
+            <p style="color:#c49a7a;">Hi ${user.full_name}, click the button below to reset your password. This link expires in 1 hour.</p>
+            <a href="${resetLink}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:#f97316;color:white;border-radius:8px;text-decoration:none;font-weight:bold;">
+              Reset Password →
+            </a>
+            <p style="font-size:12px;color:#6b4c2a;">If you didn't request this, ignore this email.</p>
+          </div>`,
+        }).catch(err => console.error('Reset email error:', err.message));
+      }
+    }
+  } finally { client.release(); }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Token and password are required' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  const data = resetTokens.get(token);
+  if (!data) return res.status(400).json({ error: 'Invalid or expired reset link. Please request a new one.' });
+  if (Date.now() > data.expires) {
+    resetTokens.delete(token);
+    return res.status(400).json({ error: 'This reset link has expired. Please request a new one.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      'UPDATE users SET password_hash=$1, updated_at=NOW() WHERE email=$2 AND agency_id=$3 RETURNING id',
+      [hash, data.email, data.agency_id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    resetTokens.delete(token);
+    res.json({ message: 'Password reset successfully. You can now login with your new password.' });
   } finally { client.release(); }
 });
 

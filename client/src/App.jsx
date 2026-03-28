@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 
 import Login         from './pages/Login';
 import About         from './pages/About';
+import ResetPassword from './pages/ResetPassword';
 import Register      from './pages/Register';
 import PendingApproval from './pages/PendingApproval';
 import Terms         from './pages/Terms';
@@ -38,7 +39,8 @@ export default function App() {
           <WhatsAppFloat />
           <Routes>
             <Route path="/terms"    element={<Terms />} />
-            <Route path="/about"    element={<About />} />
+            <Route path="/about"         element={<About />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pending"  element={<PendingApproval />} />
             <Route path="/rejected" element={<PendingApproval />} />
 

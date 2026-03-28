@@ -54,6 +54,14 @@ async function initDB() {
           [email, hash]
         );
         console.log(`✅ Admin seeded: ${email}`);
+      } else {
+        // Always update admin password hash on startup to ensure it matches
+        const hash = await bcrypt.hash('Admin@1234', 12);
+        await client.query(
+          "UPDATE users SET password_hash=$1, role='admin', status='approved' WHERE email=$2 AND agency_id='default'",
+          [hash, email]
+        );
+        console.log(`✅ Admin password refreshed: ${email}`);
       }
     }
   } catch (err) {
