@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Block search engines from private/logged-in routing
+Disallow: /admin
+Disallow: /student
+Disallow: /pending
+
+# Point Google directly to your sitemap
+Sitemap: https://www.learningfoxx.com/sitemap.xml
