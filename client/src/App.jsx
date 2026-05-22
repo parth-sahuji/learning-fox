@@ -30,6 +30,15 @@ import StudentDashboard from './pages/student/Dashboard';
 import StudentProfile   from './pages/student/Profile';
 import StudentFees      from './pages/student/Fees';
 
+import HowItWorks from './pages/HowItWorks';
+import OurRules from './pages/OurRules';
+import Mumbai from './pages/locations/india/Mumbai';
+import NewYork from './pages/locations/usa/NewYork';
+import London from './pages/locations/uk/London';
+import Mathematics from './pages/subjects/Mathematics';
+import Science from './pages/subjects/Science';
+import English from './pages/subjects/English';
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -78,6 +87,14 @@ export default function App() {
                 <Route path="/student"          element={<StudentDashboard />} />
                 <Route path="/student/profile"  element={<StudentProfile />} />
                 <Route path="/student/fees"     element={<StudentFees />} />
+		<Route path="/how-it-works" element={<HowItWorks />} />
+<Route path="/our-rules" element={<OurRules />} />
+<Route path="/locations/india/mumbai" element={<Mumbai />} />
+<Route path="/locations/usa/new-york" element={<NewYork />} />
+<Route path="/locations/uk/london" element={<London />} />
+<Route path="/subjects/mathematics" element={<Mathematics />} />
+<Route path="/subjects/science" element={<Science />} />
+<Route path="/subjects/english" element={<English />} />
               </Route>
             </Route>
 
