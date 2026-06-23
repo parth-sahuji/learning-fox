@@ -1,41 +1,36 @@
-// Email via Gmail SMTP using Nodemailer
-// Uses learningfoxx4u@gmail.com as sender
-// Requires Gmail App Password (NOT your regular Gmail password)
-// Setup: Gmail → Settings → Security → 2-Step Verification → App Passwords → Create
+// Email via Brevo (Sendinblue) Transactional Email API
+// Set BREVO_API_KEY and BREVO_SENDER_EMAIL in Render env vars
+// BREVO_SENDER_EMAIL must be a verified sender in your Brevo account
 
-const nodemailer = require('nodemailer');
-
-const GMAIL_USER = process.env.GMAIL_USER || 'learningfoxx4u@gmail.com';
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD; // Set in Render env vars
+const GMAIL_USER = process.env.GMAIL_USER || 'learningfoxx4u@gmail.com'; // shown in email footer only
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || GMAIL_USER;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com';
 
-function createTransporter() {
-  if (!GMAIL_APP_PASSWORD) return null;
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: GMAIL_USER,
-      pass: GMAIL_APP_PASSWORD,
-    },
-  });
-}
-
 async function sendEmail({ to, subject, html }) {
-  const transporter = createTransporter();
-  if (!transporter) {
-    console.log(`📧 Email skipped (GMAIL_APP_PASSWORD not set): ${subject} → ${to}`);
+  if (!BREVO_API_KEY) {
+    console.log(`📧 Email skipped (BREVO_API_KEY not set): ${subject} → ${to}`);
     return;
   }
   try {
-    await transporter.sendMail({
-      from: `"Learning Foxx" <${GMAIL_USER}>`,
-      to,
-      subject,
-      html,
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        'api-key': BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: 'Learning Foxx', email: BREVO_SENDER_EMAIL },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      }),
     });
-    console.log(`✅ Email sent: ${subject} → ${to}`);
+    if (!res.ok) throw new Error(await res.text());
+    console.log(`✅ Email sent via Brevo: ${subject} → ${to}`);
   } catch (err) {
-    console.error('Email error:', err.message);
+    console.error('Brevo email error:', err.message);
   }
 }
 
@@ -180,4 +175,20 @@ function approvalEmail({ full_name, email, role }) {
   });
 }
 
-module.exports = { welcomeStudentEmail, welcomeTeacherEmail, notifyAdminNewUser, approvalEmail };
+function sendResetEmail({ full_name, email, resetLink }) {
+  return sendEmail({
+    to: email,
+    subject: '🔐 Reset Your Learning Foxx Password',
+    html: emailWrapper(`
+      <h2 style="color:#f97316;margin:0 0 8px;">Reset Your Password</h2>
+      <p style="color:#c49a7a;margin:0 0 16px;">Hi <strong style="color:#fdf0e8;">${full_name}</strong>, click the button below to reset your password. This link expires in 1 hour.</p>
+      <a href="${resetLink}"
+        style="display:inline-block;padding:12px 28px;background:#f97316;color:white;border-radius:10px;text-decoration:none;font-weight:bold;font-size:15px;">
+        Reset Password →
+      </a>
+      <p style="font-size:12px;color:#6b4c2a;margin-top:16px;">If you didn't request this, you can safely ignore this email.</p>
+    `),
+  });
+}
+
+module.exports = { welcomeStudentEmail, welcomeTeacherEmail, notifyAdminNewUser, approvalEmail, sendResetEmail };

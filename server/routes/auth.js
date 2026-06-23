@@ -426,32 +426,9 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetLink = `${process.env.CLIENT_URL?.split(',')[0] || 'https://learningfoxx.com'}/reset-password?token=${token}`;
 
-    const { approvalEmail: _, ...emailModule } = require('../email');
-    if (emailModule.sendResetEmail) {
-      emailModule.sendResetEmail({ full_name: user.full_name, email: user.email, resetLink }).catch(() => {});
-    } else {
-      // Fallback: use nodemailer directly
-      const nodemailer = require('nodemailer');
-      if (process.env.GMAIL_APP_PASSWORD) {
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: { user: process.env.GMAIL_USER || 'learningfoxx4u@gmail.com', pass: process.env.GMAIL_APP_PASSWORD },
-        });
-        transporter.sendMail({
-          from: `"Learning Foxx" <${process.env.GMAIL_USER || 'learningfoxx4u@gmail.com'}>`,
-          to: user.email,
-          subject: '🔐 Reset Your Learning Foxx Password',
-          html: `<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:32px;background:#1a0f05;color:#fdf0e8;border-radius:16px;">
-            <h2 style="color:#f97316;">Reset Your Password</h2>
-            <p style="color:#c49a7a;">Hi ${user.full_name}, click the button below to reset your password. This link expires in 1 hour.</p>
-            <a href="${resetLink}" style="display:inline-block;margin:16px 0;padding:12px 24px;background:#f97316;color:white;border-radius:8px;text-decoration:none;font-weight:bold;">
-              Reset Password →
-            </a>
-            <p style="font-size:12px;color:#6b4c2a;">If you didn't request this, ignore this email.</p>
-          </div>`,
-        }).catch(err => console.error('Reset email error:', err.message));
-      }
-    }
+    const { sendResetEmail } = require('../email');
+    sendResetEmail({ full_name: user.full_name, email: user.email, resetLink })
+      .catch(err => console.error('Reset email error:', err.message));
   } finally { client.release(); }
 });
 
