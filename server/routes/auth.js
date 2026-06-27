@@ -96,10 +96,12 @@ router.post('/register', (req, res, next) => {
     const user = result.rows[0];
 
     if (role === 'teacher') {
-      // Upload from local disk to Cloudinary
-      const aadharUrl = await uploadToCloudinary(req.files.aadhar_doc[0].path, 'learningfox/reg_docs');
+      // Upload from memory buffer to Cloudinary
+      const aadharUrl = req.files.aadhar_doc
+        ? await uploadBufferToCloudinary(req.files.aadhar_doc[0].buffer, 'learningfox/reg_docs', req.files.aadhar_doc[0].originalname)
+        : '';
       const resumeUrl = req.files.resume_doc
-        ? await uploadToCloudinary(req.files.resume_doc[0].path, 'learningfox/reg_docs')
+        ? await uploadBufferToCloudinary(req.files.resume_doc[0].buffer, 'learningfox/reg_docs', req.files.resume_doc[0].originalname)
         : '';
       await client.query(
         `INSERT INTO teacher_profiles
@@ -318,8 +320,8 @@ router.post('/upload-doc', (req, res) => {
         );
       }
 
-      if (!result.aadhar_url) {
-        return res.status(400).json({ error: 'No file received — please select your Aadhar card file again' });
+      if (!result.aadhar_url && !result.resume_url) {
+        return res.status(400).json({ error: 'No file received — please select your file again' });
       }
 
       res.json(result);

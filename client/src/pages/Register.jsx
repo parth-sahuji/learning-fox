@@ -90,9 +90,20 @@ export default function Register() {
       let response;
 
       if (role === 'teacher') {
-        // No file upload step needed - Aadhar collected by admin separately
-        const aadhar_url = '';
-        const resume_url = '';
+        let aadhar_url = '';
+        let resume_url = '';
+
+        // Upload any selected files to Cloudinary first
+        if (aadharFile || resumeFile) {
+          const fd = new FormData();
+          if (aadharFile) fd.append('aadhar_doc', aadharFile);
+          if (resumeFile) fd.append('resume_doc', resumeFile);
+          const uploadRes = await api.post('/auth/upload-doc', fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          aadhar_url = uploadRes.data.aadhar_url || '';
+          resume_url = uploadRes.data.resume_url || '';
+        }
 
         // Step 2: Register with JSON (files already uploaded)
         response = await api.post('/auth/register/teacher', {
@@ -264,10 +275,19 @@ export default function Register() {
             <div className="space-y-5">
               <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">Teacher Details</h3>
 
-              {/* Aadhar - collected by admin via WhatsApp */}
-              <div className="p-3 rounded-xl bg-amber-900/20 border border-amber-700/40">
-                <p className="text-sm font-semibold text-amber-400 mb-1">🪪 Aadhar Verification</p>
-                <p className="text-xs text-amber-300/80">The admin will contact you on WhatsApp to collect your Aadhar card for verification after registration.</p>
+              {/* Aadhar */}
+              <div>
+                <label className="label">🪪 Aadhar Card <span className="text-[var(--text-secondary)] text-xs font-normal">(optional — or share later on WhatsApp)</span></label>
+                <div onClick={() => aadharRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-4 cursor-pointer text-center transition-all
+                    ${aadharFile ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20' : 'border-[var(--border)] hover:border-brand-400 hover:bg-[var(--bg-secondary)]'}`}>
+                  <input ref={aadharRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={e => setAadharFile(e.target.files[0])} />
+                  <div className="text-2xl mb-1">{aadharFile ? '✅' : '🪪'}</div>
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">
+                    {aadharFile ? aadharFile.name : 'Upload Aadhar Card (Optional)'}
+                  </p>
+                </div>
               </div>
 
               {/* Resume */}
