@@ -105,7 +105,7 @@ router.post('/register', (req, res, next) => {
         : '';
       await client.query(
         `INSERT INTO teacher_profiles
-           (agency_id, user_id, aadhar_doc, resume_doc, class_from, class_to, subjects_taught, languages, education, skills, bio)
+           (agency_id, user_id, aadhar_doc, resume_doc, teach_class_from, teach_class_to, subjects, languages, education, skills, bio)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
          ON CONFLICT (user_id) DO NOTHING`,
         [agency_id, user.id, aadharUrl, resumeUrl,
@@ -376,7 +376,7 @@ router.post('/register/teacher', async (req, res) => {
 
     await client.query(
       `INSERT INTO teacher_profiles
-         (agency_id, user_id, aadhar_doc, resume_doc, class_from, class_to, subjects_taught, languages, education, skills, bio)
+         (agency_id, user_id, aadhar_doc, resume_doc, teach_class_from, teach_class_to, subjects, languages, education, skills, bio)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        ON CONFLICT (user_id) DO NOTHING`,
       [agency_id, user.id,
