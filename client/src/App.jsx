@@ -32,9 +32,9 @@ import StudentFees      from './pages/student/Fees';
 
 import HowItWorks from './pages/HowItWorks';
 import OurRules from './pages/OurRules';
-import Mumbai from './pages/locations/india/Mumbai';
-import NewYork from './pages/locations/usa/NewYork';
-import London from './pages/locations/uk/London';
+import Mumbai from './pages/Mumbai';
+import NewYork from './pages/NewYork';
+import London from './pages/London';
 import Mathematics from './pages/subjects/Mathematics';
 import Science from './pages/subjects/Science';
 import English from './pages/subjects/English';
