@@ -35,9 +35,9 @@ import OurRules from './pages/OurRules';
 import Mumbai from './pages/Mumbai';
 import NewYork from './pages/NewYork';
 import London from './pages/London';
-import Mathematics from './pages/subjects/Mathematics';
-import Science from './pages/subjects/Science';
-import English from './pages/subjects/English';
+import Mathematics from './pages/Mathematics';
+import Science from './pages/Science';
+import English from './pages/English';
 
 export default function App() {
   return (
