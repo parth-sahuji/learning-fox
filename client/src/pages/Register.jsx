@@ -9,6 +9,45 @@ const SUBJECTS = ['Mathematics','Science','English','Hindi','Social Studies','Ph
 const BOARDS = ['CBSE','ICSE','State Board','IB','Cambridge','Others'];
 const CLASSES = ['1','2','3','4','5','6','7','8','9','10','11','12'];
 
+const Card = ({ children }) => (
+  <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ paddingTop: '80px' }}>
+    <AnimatedBackground />
+    <div className="w-full max-w-lg relative z-10" style={{ animation: 'slideUp 0.4s ease-out' }}>
+      <div className="text-center mb-6">
+        <img src="/fox-logo.png" alt="Learning Foxx" className="mx-auto object-contain"
+          style={{ width: '110px', height: '110px', filter: 'drop-shadow(0 12px 32px rgba(239,117,32,0.5))', animation: 'floatIcon 3.5s ease-in-out infinite' }} />
+        <h1 className="font-display text-3xl font-extrabold mt-2"
+          style={{ background: 'linear-gradient(135deg, #f97316, #b94612)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          Learning Foxx
+        </h1>
+      </div>
+
+      <div className="card shadow-2xl" style={{ backdropFilter: 'blur(20px)', background: 'rgba(30,20,9,0.95)', border: '1px solid rgba(239,117,32,0.3)' }}>
+        {children}
+      </div>
+
+      <p className="text-center text-sm text-[var(--text-secondary)] mt-4">
+        Already have an account? <Link to="/login" className="text-brand-500 hover:text-brand-400 font-bold">Sign In</Link>
+      </p>
+    </div>
+  </div>
+);
+
+const StepBar = ({ totalSteps, step }) => (
+  <div className="flex items-center gap-2 mb-6">
+    {Array.from({ length: totalSteps }, (_, i) => (
+      <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-300"
+        style={{ background: i < step ? 'linear-gradient(90deg,#f97316,#b94612)' : 'rgba(255,255,255,0.1)' }} />
+    ))}
+  </div>
+);
+
+const ErrorBox = ({ error }) => error ? (
+  <div className="mb-4 p-3 bg-red-950/50 border border-red-700 rounded-xl text-sm text-red-400 flex items-start gap-2">
+    <span className="flex-shrink-0">⚠️</span> {error}
+  </div>
+) : null;
+
 export default function Register() {
   const navigate = useNavigate();
 
@@ -145,47 +184,7 @@ export default function Register() {
     }
   };
 
-  // ── Shared card wrapper ──────────────────────────────────────────
-  const Card = ({ children }) => (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ paddingTop: '80px' }}>
-      <AnimatedBackground />
-      <div className="w-full max-w-lg relative z-10" style={{ animation: 'slideUp 0.4s ease-out' }}>
-        <div className="text-center mb-6">
-          <img src="/fox-logo.png" alt="Learning Foxx" className="mx-auto object-contain"
-            style={{ width: '110px', height: '110px', filter: 'drop-shadow(0 12px 32px rgba(239,117,32,0.5))', animation: 'floatIcon 3.5s ease-in-out infinite' }} />
-          <h1 className="font-display text-3xl font-extrabold mt-2"
-            style={{ background: 'linear-gradient(135deg, #f97316, #b94612)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Learning Foxx
-          </h1>
-        </div>
-
-        <div className="card shadow-2xl" style={{ backdropFilter: 'blur(20px)', background: 'rgba(30,20,9,0.95)', border: '1px solid rgba(239,117,32,0.3)' }}>
-          {children}
-        </div>
-
-        <p className="text-center text-sm text-[var(--text-secondary)] mt-4">
-          Already have an account? <Link to="/login" className="text-brand-500 hover:text-brand-400 font-bold">Sign In</Link>
-        </p>
-      </div>
-    </div>
-  );
-
-  // ── Step indicator ───────────────────────────────────────────────
   const totalSteps = role === 'teacher' ? 3 : 2;
-  const StepBar = () => (
-    <div className="flex items-center gap-2 mb-6">
-      {Array.from({ length: totalSteps }, (_, i) => (
-        <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-300"
-          style={{ background: i < step ? 'linear-gradient(90deg,#f97316,#b94612)' : 'rgba(255,255,255,0.1)' }} />
-      ))}
-    </div>
-  );
-
-  const ErrorBox = () => error ? (
-    <div className="mb-4 p-3 bg-red-950/50 border border-red-700 rounded-xl text-sm text-red-400 flex items-start gap-2">
-      <span className="flex-shrink-0">⚠️</span> {error}
-    </div>
-  ) : null;
 
   // ════════════════════════════════════════════════════════════════
   // STEP 1 — Basic info
@@ -194,7 +193,7 @@ export default function Register() {
     <Card>
       <h2 className="font-display text-2xl font-bold text-center text-[var(--text-primary)] mb-2">Create Account 🦊</h2>
       <p className="text-center text-sm text-[var(--text-secondary)] mb-5">Join Learning Foxx — it's free</p>
-      <StepBar />
+      <StepBar totalSteps={totalSteps} step={step} />
 
       {/* Role toggle */}
       <div className="flex gap-2 mb-6">
@@ -207,7 +206,7 @@ export default function Register() {
         ))}
       </div>
 
-      <ErrorBox />
+      <ErrorBox error={error} />
 
       <form onSubmit={handleStep1} className="space-y-4">
         <div>
@@ -259,8 +258,8 @@ export default function Register() {
         {role === 'teacher' ? '👨‍🏫 Teacher Profile' : '🎓 Student Profile'}
       </h2>
       <p className="text-center text-xs text-[var(--text-secondary)] mb-5">Tell us a bit more about you</p>
-      <StepBar />
-      <ErrorBox />
+      <StepBar totalSteps={totalSteps} step={step} />
+      <ErrorBox error={error} />
 
       <form onSubmit={handleStep2} className="space-y-4">
         {role === 'teacher' ? (
@@ -393,8 +392,8 @@ export default function Register() {
     <Card>
       <h2 className="font-display text-2xl font-bold text-center text-[var(--text-primary)] mb-2">📎 Upload Documents</h2>
       <p className="text-center text-xs text-[var(--text-secondary)] mb-5">These help admin verify your profile faster</p>
-      <StepBar />
-      <ErrorBox />
+      <StepBar totalSteps={totalSteps} step={step} />
+      <ErrorBox error={error} />
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
