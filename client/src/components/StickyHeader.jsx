@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
 const SUPPORT_PHONE = '8340173069';
@@ -54,14 +55,14 @@ export default function StickyHeader() {
         <div className="relative max-w-screen-2xl mx-auto h-full px-3 sm:px-6 flex items-center justify-between gap-2">
 
           {/* LEFT: Logo + Brand */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0 no-underline">
             <img src="/fox-logo.png" alt="Learning Foxx"
               className="h-10 w-10 rounded-full object-cover border-2 border-white/40 shadow-lg" />
             <span className="font-display font-bold text-white text-base hidden sm:block"
               style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
               Learning Foxx
             </span>
-          </div>
+          </Link>
 
           {/* CENTER: Contact info — THE HERO */}
           <div className="flex items-center gap-2 sm:gap-5 flex-1 justify-center">
