@@ -67,9 +67,17 @@ app.use('/api/admin',   require('./routes/admin'));
 app.use('/api/teacher', require('./routes/teacher'));
 app.use('/api/student', require('./routes/student'));
 
-app.get('/api/health', (req, res) =>
-  res.json({ status: 'ok', version: '6.0', timestamp: new Date().toISOString() })
-);
+app.get('/api/health', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    res.json({ status: 'ok', db: 'ok', version: '6.0', timestamp: new Date().toISOString() });
+  } catch (err) {
+    console.error('Health check DB error:', err.message);
+    res.status(500).json({ status: 'error', db: 'error', error: err.message });
+  }
+});
 
 // 404
 app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
