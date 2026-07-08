@@ -2,6 +2,7 @@ const { approvalEmail } = require('../email');
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole } = require('../middleware/auth');
+const { getSignedUrl } = require('../supabaseStorage');
 
 const router = express.Router();
 
@@ -355,6 +356,9 @@ router.get('/user-profile/:id', async (req, res) => {
     if (user.rows[0].role === 'teacher') {
       const r = await client.query('SELECT * FROM teacher_profiles WHERE user_id=$1', [req.params.id]);
       profile = r.rows[0] || {};
+      // aadhar_doc/resume_doc are private Supabase Storage paths — resolve to short-lived signed URLs
+      if (profile.aadhar_doc) profile.aadhar_doc = (await getSignedUrl(profile.aadhar_doc)) || '';
+      if (profile.resume_doc) profile.resume_doc = (await getSignedUrl(profile.resume_doc)) || '';
     } else if (user.rows[0].role === 'student') {
       const r = await client.query('SELECT * FROM student_profiles WHERE user_id=$1', [req.params.id]);
       profile = r.rows[0] || {};
@@ -367,28 +371,6 @@ router.get('/user-profile/:id', async (req, res) => {
   } finally { client.release(); }
 });
 
-// GET /api/admin/document/reg_docs/:filename
-// Cloudinary stores the full URL in DB — look it up and redirect
-router.get('/document/reg_docs/:filename', async (req, res) => {
-  const { agency_id } = req.user;
-  const { filename } = req.params;
-  const client = await pool.connect();
-  try {
-    // Find in teacher_profiles where aadhar_doc or resume_doc matches filename
-    const r = await client.query(
-      `SELECT aadhar_doc, resume_doc FROM teacher_profiles tp
-       JOIN users u ON u.id = tp.user_id
-       WHERE u.agency_id=$1 AND (
-         tp.aadhar_doc LIKE $2 OR tp.resume_doc LIKE $2
-       ) LIMIT 1`,
-      [agency_id, `%${filename}%`]
-    );
-    if (r.rows[0]) {
-      const url = r.rows[0].aadhar_doc?.includes(filename)
-        ? r.rows[0].aadhar_doc
-        : r.rows[0].resume_doc;
-      if (url) return res.redirect(url);
-    }
-    res.status(404).json({ error: 'Document not found' });
-  } finally { client.release(); }
-});
+// (Old Cloudinary filename-lookup route removed — docs are now served via
+// signed URLs returned directly from /user-profile/:id, since aadhar_doc/resume_doc
+// in the DB are private Supabase Storage paths, not public URLs.)

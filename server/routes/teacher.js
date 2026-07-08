@@ -2,6 +2,7 @@ const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole, requireApproved } = require('../middleware/auth');
 const { uploadPortfolio, cloudinary, uploadBufferToCloudinary } = require('../cloudinary');
+const { uploadBufferToSupabase, getSignedUrl, docPath, extFromName } = require('../supabaseStorage');
 
 const router = express.Router();
 router.use(authenticate, requireRole('teacher'));
@@ -44,7 +45,11 @@ router.get('/profile', async (req, res) => {
   try {
     const user    = await client.query('SELECT id, email, full_name, phone, status FROM users WHERE id=$1', [user_id]);
     const profile = await client.query('SELECT * FROM teacher_profiles WHERE user_id=$1', [user_id]);
-    res.json({ user: user.rows[0], profile: profile.rows[0] || {} });
+    const p = profile.rows[0] || {};
+    // aadhar_doc/resume_doc are private storage paths — resolve to short-lived signed URLs for viewing
+    if (p.aadhar_doc) p.aadhar_doc = (await getSignedUrl(p.aadhar_doc)) || '';
+    if (p.resume_doc) p.resume_doc = (await getSignedUrl(p.resume_doc)) || '';
+    res.json({ user: user.rows[0], profile: p });
   } finally { client.release(); }
 });
 
@@ -213,17 +218,17 @@ router.post('/upload-aadhar', requireApproved, (req, res, next) => {
   if (!files.aadhar_doc?.[0]) return res.status(400).json({ error: 'No file received' });
   const client = await pool.connect();
   try {
-    const { uploadBufferToCloudinary } = require('../cloudinary');
-    const url = await uploadBufferToCloudinary(
+    const path = await uploadBufferToSupabase(
       files.aadhar_doc[0].buffer,
-      'learningfox/reg_docs',
-      files.aadhar_doc[0].originalname
+      docPath('teacher', user_id, 'aadhar', extFromName(files.aadhar_doc[0].originalname)),
+      files.aadhar_doc[0].mimetype
     );
     await client.query(
       `INSERT INTO teacher_profiles (agency_id, user_id, aadhar_doc)
        VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET aadhar_doc=$3, updated_at=NOW()`,
-      [agency_id, user_id, url]
+      [agency_id, user_id, path]
     );
+    const url = await getSignedUrl(path);
     res.json({ message: 'Aadhar uploaded successfully', url });
   } catch(err) {
     console.error(err);
@@ -243,15 +248,17 @@ router.post('/upload-resume', requireApproved, (req, res, next) => {
   if (!fileKey) return res.status(400).json({ error: 'No file received' });
   const client = await pool.connect();
   try {
-    const { uploadBufferToCloudinary } = require('../cloudinary');
-    const url = await uploadBufferToCloudinary(
-      files[fileKey][0].buffer, 'learningfox/reg_docs', files[fileKey][0].originalname
+    const path = await uploadBufferToSupabase(
+      files[fileKey][0].buffer,
+      docPath('teacher', user_id, 'resume', extFromName(files[fileKey][0].originalname)),
+      files[fileKey][0].mimetype
     );
     await client.query(
       `INSERT INTO teacher_profiles (agency_id, user_id, resume_doc)
        VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET resume_doc=$3, updated_at=NOW()`,
-      [agency_id, user_id, url]
+      [agency_id, user_id, path]
     );
+    const url = await getSignedUrl(path);
     res.json({ message: 'Resume uploaded successfully', url });
   } catch(err) {
     res.status(500).json({ error: 'Upload failed' });

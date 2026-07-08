@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
 const { JWT_SECRET, authenticate } = require('../middleware/auth');
 const { uploadRegDocs, uploadBufferToCloudinary } = require('../cloudinary');
+const { uploadBufferToSupabase, docPath, extFromName } = require('../supabaseStorage');
 
 const router = express.Router();
 
@@ -96,12 +97,20 @@ router.post('/register', (req, res, next) => {
     const user = result.rows[0];
 
     if (role === 'teacher') {
-      // Upload from memory buffer to Cloudinary
+      // Upload from memory buffer to Supabase Storage (private bucket)
       const aadharUrl = req.files.aadhar_doc
-        ? await uploadBufferToCloudinary(req.files.aadhar_doc[0].buffer, 'learningfox/reg_docs', req.files.aadhar_doc[0].originalname)
+        ? await uploadBufferToSupabase(
+            req.files.aadhar_doc[0].buffer,
+            docPath('teacher', user.id, 'aadhar', extFromName(req.files.aadhar_doc[0].originalname)),
+            req.files.aadhar_doc[0].mimetype
+          )
         : '';
       const resumeUrl = req.files.resume_doc
-        ? await uploadBufferToCloudinary(req.files.resume_doc[0].buffer, 'learningfox/reg_docs', req.files.resume_doc[0].originalname)
+        ? await uploadBufferToSupabase(
+            req.files.resume_doc[0].buffer,
+            docPath('teacher', user.id, 'resume', extFromName(req.files.resume_doc[0].originalname)),
+            req.files.resume_doc[0].mimetype
+          )
         : '';
       await client.query(
         `INSERT INTO teacher_profiles
@@ -305,18 +314,18 @@ router.post('/upload-doc', authenticate, (req, res) => {
 
     try {
       if (files.aadhar_doc?.[0]?.buffer) {
-        result.aadhar_url = await uploadBufferToCloudinary(
+        result.aadhar_url = await uploadBufferToSupabase(
           files.aadhar_doc[0].buffer,
-          'learningfox/reg_docs',
-          files.aadhar_doc[0].originalname
+          docPath('teacher', req.user.id, 'aadhar', extFromName(files.aadhar_doc[0].originalname)),
+          files.aadhar_doc[0].mimetype
         );
         console.log('Aadhar uploaded:', result.aadhar_url);
       }
       if (files.resume_doc?.[0]?.buffer) {
-        result.resume_url = await uploadBufferToCloudinary(
+        result.resume_url = await uploadBufferToSupabase(
           files.resume_doc[0].buffer,
-          'learningfox/reg_docs',
-          files.resume_doc[0].originalname
+          docPath('teacher', req.user.id, 'resume', extFromName(files.resume_doc[0].originalname)),
+          files.resume_doc[0].mimetype
         );
       }
 
@@ -324,7 +333,7 @@ router.post('/upload-doc', authenticate, (req, res) => {
         return res.status(400).json({ error: 'No file received — please select your file again' });
       }
 
-      // Persist the URL(s) to the already-created teacher_profiles row.
+      // Persist the storage path(s) to the already-created teacher_profiles row.
       // Only overwrite the column actually uploaded this call.
       const client = await pool.connect();
       try {
@@ -342,8 +351,8 @@ router.post('/upload-doc', authenticate, (req, res) => {
 
       res.json(result);
     } catch (uploadErr) {
-      console.error('Cloudinary upload error:', uploadErr);
-      res.status(500).json({ error: 'File upload to cloud failed. Check Cloudinary credentials.' });
+      console.error('Supabase upload error:', uploadErr);
+      res.status(500).json({ error: 'File upload to cloud failed. Check Supabase Storage credentials.' });
     }
   });
 });

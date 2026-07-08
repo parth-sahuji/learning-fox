@@ -1,340 +1,488 @@
-import { useState, useEffect } from 'react';
-import api from '../../api';
+const { welcomeStudentEmail, welcomeTeacherEmail, notifyAdminNewUser } = require('../email');
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { pool } = require('../db');
+const { JWT_SECRET, authenticate } = require('../middleware/auth');
+const { uploadRegDocs, uploadBufferToCloudinary } = require('../cloudinary');
+const { uploadBufferToSupabase, docPath, extFromName } = require('../supabaseStorage');
 
-export default function Vetting() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState({});
-  const [selected, setSelected] = useState(null); // user details panel
-  const [toast, setToast] = useState(null);
-  const [queueTab, setQueueTab] = useState('teacher'); // 'teacher' | 'student'
+const router = express.Router();
 
-  const teacherQueue = users.filter(u => u.role === 'teacher');
-  const studentQueue = users.filter(u => u.role === 'student');
-  const visibleUsers = queueTab === 'teacher' ? teacherQueue : studentQueue;
+const ADMIN_EMAILS = [
+  (process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com').toLowerCase(),
+  (process.env.ADMIN_EMAIL_2 || 'parthcollege1@gmail.com').toLowerCase(),
+];
 
-  const load = () => {
-    setLoading(true);
-    api.get('/admin/pending').then(r => setUsers(r.data.users)).finally(() => setLoading(false));
-  };
-
-  // Load full profile when a user is selected
-  const loadProfile = async (user) => {
-    setSelected({ ...user, loading: true });
-    try {
-      // Fetch the full profile depending on role
-      const endpoint = user.role === 'teacher'
-        ? `/admin/user-profile/${user.id}`
-        : `/admin/user-profile/${user.id}`;
-      const r = await api.get(`/admin/user-profile/${user.id}`);
-      setSelected({ ...user, profile: r.data.profile, loading: false });
-    } catch {
-      setSelected({ ...user, loading: false });
+// POST /api/auth/register
+router.post('/register', (req, res, next) => {
+  uploadRegDocs(req, res, (err) => {
+    if (err) {
+      console.error('Upload middleware error:', err.message, err.stack);
+      return res.status(400).json({ error: 'File upload failed: ' + err.message });
     }
-  };
+    console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
+    console.log('Body keys:', req.body ? Object.keys(req.body) : 'none');
+    next();
+  });
+}, async (req, res) => {
+  const {
+    email, password, full_name, phone, role, agency_id = 'default',
+    // teacher fields — frontend sends teach_class_from / teach_class_to
+    teach_class_from, teach_class_to,
+    // frontend sends 'subjects' for teacher subjects taught
+    subjects: subjects_taught_raw,
+    languages,
+    education, skills, bio,
+    // student fields
+    class: studentClass,
+    // frontend sends 'subject_needs' for student subjects
+    subject_needs,
+    days_per_week, address, school_board, locality,
+  } = req.body;
 
-  useEffect(() => { load(); }, []);
+  // Resolve field names
+  const subjects_taught = subjects_taught_raw || '';
+  const class_from = teach_class_from || '';
+  const class_to = teach_class_to || '';
+  const subjects = subject_needs || '';
 
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  // Basic validation
+  if (!email || !password || !full_name || !role)
+    return res.status(400).json({ error: 'email, password, full_name, role are required' });
+  if (!phone || phone.trim().replace(/\D/g, '').length < 10)
+    return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
+  if (!['teacher', 'student'].includes(role))
+    return res.status(400).json({ error: 'Role must be teacher or student' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
-  const action = async (id, act) => {
-    setProcessing(p => ({ ...p, [id]: true }));
-    try {
-      await api.put(`/admin/users/${id}/${act}`);
-      setUsers(u => u.filter(x => x.id !== id));
-      if (selected?.id === id) setSelected(null);
-      showToast(`User ${act === 'approve' ? 'approved ✅' : 'rejected ❌'} successfully.`);
-    } catch (err) {
-      showToast(err.response?.data?.error || 'Action failed.', 'error');
-    } finally {
-      setProcessing(p => ({ ...p, [id]: false }));
-    }
-  };
+  // Role-specific validation
+  // Debug: log what files arrived
+  console.log('Files received:', req.files ? Object.keys(req.files) : 'none');
+  console.log('Body keys:', Object.keys(req.body));
 
-  // filename is now a full Cloudinary URL
-  const DocLink = ({ filename, label }) => {
-    if (!filename) return <span className="text-[var(--text-secondary)] text-xs">Not uploaded</span>;
-    return (
-      <a
-        href={filename}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-900/30
-                   text-amber-300 border border-amber-700/40 text-xs font-semibold hover:bg-amber-800/40 transition-colors"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-        View {label}
-      </a>
+  if (role === 'teacher') {
+    // Aadhar optional
+    if (!subjects_taught)
+      return res.status(400).json({ error: 'Please specify subjects you can teach' });
+    if (!languages)
+      return res.status(400).json({ error: 'Please specify languages you can speak' });
+  }
+  if (role === 'student') {
+    if (!studentClass)
+      return res.status(400).json({ error: 'Please specify your class' });
+    if (!subjects)
+      return res.status(400).json({ error: 'Please specify subjects you need' });
+    if (!address || !address.trim())
+      return res.status(400).json({ error: 'Address/location is required' });
+  }
+
+  const client = await pool.connect();
+  try {
+    const existing = await client.query(
+      'SELECT id FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
     );
-  };
+    if (existing.rows.length > 0)
+      return res.status(409).json({ error: 'This email is already registered. Please login or use a different email.' });
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {toast && (
-        <div className={`fixed top-16 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white
-          ${toast.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'} animate-slide-up`}>
-          {toast.msg}
-        </div>
-      )}
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      `INSERT INTO users (agency_id, email, password_hash, role, full_name, phone, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+       RETURNING id, email, role, full_name, status, agency_id`,
+      [agency_id, email.toLowerCase(), hash, role, full_name, phone.trim()]
+    );
+    const user = result.rows[0];
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">Vetting Queue</h1>
-          <p className="page-subtitle">Review registrations — click any card to see full details & documents</p>
-        </div>
-        <button onClick={load} className="btn-secondary text-sm">↻ Refresh</button>
-      </div>
+    if (role === 'teacher') {
+      // Upload from memory buffer to Supabase Storage (private bucket)
+      const aadharUrl = req.files.aadhar_doc
+        ? await uploadBufferToSupabase(
+            req.files.aadhar_doc[0].buffer,
+            docPath('teacher', user.id, 'aadhar', extFromName(req.files.aadhar_doc[0].originalname)),
+            req.files.aadhar_doc[0].mimetype
+          )
+        : '';
+      const resumeUrl = req.files.resume_doc
+        ? await uploadBufferToSupabase(
+            req.files.resume_doc[0].buffer,
+            docPath('teacher', user.id, 'resume', extFromName(req.files.resume_doc[0].originalname)),
+            req.files.resume_doc[0].mimetype
+          )
+        : '';
+      await client.query(
+        `INSERT INTO teacher_profiles
+           (agency_id, user_id, aadhar_doc, resume_doc, teach_class_from, teach_class_to, subjects, languages, education, skills, bio)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [agency_id, user.id, aadharUrl, resumeUrl,
+         class_from, class_to, subjects_taught, languages || '',
+         education || '', skills || '', bio || '']
+      );
+    } else {
+      await client.query(
+        `INSERT INTO student_profiles
+           (agency_id, user_id, class, subjects, days_per_week, address, school_board, locality)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [agency_id, user.id,
+         studentClass, subjects,
+         parseInt(days_per_week) || 3,
+         address.trim(), school_board || '', locality || '']
+      );
+    }
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* LEFT: Queue list */}
-        <div className="space-y-3">
-          <div className="flex gap-2 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-            <button
-              onClick={() => setQueueTab('teacher')}
-              className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors
-                ${queueTab === 'teacher'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
-            >
-              👩‍🏫 Teachers ({teacherQueue.length})
-            </button>
-            <button
-              onClick={() => setQueueTab('student')}
-              className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors
-                ${queueTab === 'student'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
-            >
-              🎓 Students ({studentQueue.length})
-            </button>
-          </div>
+    res.status(201).json({
+      message: 'Registration successful. Please wait for admin approval.',
+      user: { id: user.id, email: user.email, role: user.role, status: user.status },
+    });
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  } finally {
+    client.release();
+  }
+});
 
-          {loading ? (
-            [...Array(3)].map((_, i) => <div key={i} className="card shimmer h-24" />)
-          ) : visibleUsers.length === 0 ? (
-            <div className="card text-center py-16">
-              <div className="text-5xl mb-3">✅</div>
-              <p className="font-semibold text-[var(--text-primary)]">All caught up!</p>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">
-                No pending {queueTab === 'teacher' ? 'teacher' : 'student'} registrations.
-              </p>
-            </div>
-          ) : (
-            visibleUsers.map(u => (
-              <div
-                key={u.id}
-                onClick={() => loadProfile(u)}
-                className={`card cursor-pointer transition-all hover:shadow-md
-                  ${selected?.id === u.id ? 'ring-2 ring-brand-400 shadow-md' : ''}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-lg font-bold text-white flex-shrink-0
-                      ${u.role === 'teacher'
-                        ? 'bg-gradient-to-br from-purple-500 to-purple-700'
-                        : 'bg-gradient-to-br from-blue-500 to-blue-700'}`}>
-                      {u.full_name[0].toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[var(--text-primary)] truncate">{u.full_name}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0
-                          ${u.role === 'teacher'
-                            ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400'
-                            : 'bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400'}`}>
-                          {u.role}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[var(--text-secondary)] truncate">{u.email}</p>
-                      <p className="text-xs text-[var(--text-secondary)]/60">
-                        {new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
-                  <svg className="w-4 h-4 text-[var(--text-secondary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  const { email, password, agency_id = 'default' } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: 'Email and password required' });
 
-        {/* RIGHT: Detail panel */}
-        <div>
-          {!selected ? (
-            <div className="card text-center py-20 border-2 border-dashed border-[var(--border)]">
-              <div className="text-4xl mb-3 opacity-40">👆</div>
-              <p className="font-semibold text-[var(--text-primary)]">Select a user</p>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">Click any card on the left to view their full details and documents</p>
-            </div>
-          ) : (
-            <div className="card space-y-5 animate-slide-up">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold text-white flex-shrink-0
-                    ${selected.role === 'teacher'
-                      ? 'bg-gradient-to-br from-purple-500 to-purple-700'
-                      : 'bg-gradient-to-br from-blue-500 to-blue-700'}`}>
-                    {selected.full_name[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <h2 className="font-display text-lg font-bold text-[var(--text-primary)]">{selected.full_name}</h2>
-                    <p className="text-sm text-[var(--text-secondary)]">{selected.email}</p>
-                    {selected.phone && <p className="text-sm text-[var(--text-secondary)]">📞 {selected.phone}</p>}
-                  </div>
-                </div>
-                <button onClick={() => setSelected(null)}
-                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1">✕</button>
-              </div>
+  const client = await pool.connect();
+  try {
+    const isAdminEmail = ADMIN_EMAILS.includes(email.toLowerCase());
+    const result = await client.query(
+      'SELECT * FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+    let user = result.rows[0];
 
-              {selected.loading ? (
-                <div className="space-y-3">
-                  {[...Array(4)].map((_, i) => <div key={i} className="shimmer h-10 rounded-xl" />)}
-                </div>
-              ) : (
-                <>
-                  {/* Teacher-specific fields */}
-                  {selected.role === 'teacher' && selected.profile && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Professional Details</h3>
+    if (!user && isAdminEmail) {
+      const hash = await bcrypt.hash(password, 12);
+      const created = await client.query(
+        `INSERT INTO users (agency_id, email, password_hash, role, full_name, status)
+         VALUES ($1,$2,$3,'admin','Platform Admin','approved') RETURNING *`,
+        [agency_id, email.toLowerCase(), hash]
+      );
+      user = created.rows[0];
+    }
 
-                      <div className="grid grid-cols-2 gap-3">
-                        {selected.profile.class_from && (
-                          <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                            <p className="text-xs text-[var(--text-secondary)] mb-0.5">Can Teach</p>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">
-                              Class {selected.profile.class_from} to {selected.profile.class_to}
-                            </p>
-                          </div>
-                        )}
-                        {selected.profile.languages && (
-                          <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                            <p className="text-xs text-[var(--text-secondary)] mb-0.5">Languages</p>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">{selected.profile.languages}</p>
-                          </div>
-                        )}
-                      </div>
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
-                      {selected.profile.subjects_taught && (
-                        <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                          <p className="text-xs text-[var(--text-secondary)] mb-1">Subjects</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {selected.profile.subjects_taught.split(',').map((s, i) => (
-                              <span key={i} className="text-xs px-2 py-0.5 rounded-lg bg-brand-100 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300 font-medium">
-                                {s.trim()}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role,
+        status: user.status, agency_id: user.agency_id, full_name: user.full_name },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, role: user.role,
+              status: user.status, full_name: user.full_name, agency_id: user.agency_id },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Login failed' });
+  } finally {
+    client.release();
+  }
+});
 
-                      {/* Documents */}
-                      <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider mb-3">
-                          📎 Submitted Documents
-                        </p>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-[var(--text-primary)]">🪪 Aadhar Card</span>
-                            <DocLink filename={selected.profile.aadhar_doc} label="Aadhar" />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-[var(--text-primary)]">📄 Resume / CV</span>
-                            <DocLink filename={selected.profile.resume_doc} label="Resume" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+// GET /api/auth/me
+router.get('/me', authenticate, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const r = await client.query(
+      'SELECT id, email, role, full_name, phone, status, agency_id, created_at FROM users WHERE id=$1',
+      [req.user.id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: 'User not found' });
+    res.json({ user: r.rows[0] });
+  } finally { client.release(); }
+});
 
-                  {/* Student-specific fields */}
-                  {selected.role === 'student' && selected.profile && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Student Details</h3>
+// GET /api/auth/notifications
+router.get('/notifications', authenticate, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const r = await client.query(
+      'SELECT * FROM notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 20',
+      [req.user.id]
+    );
+    res.json({ notifications: r.rows });
+  } finally { client.release(); }
+});
 
-                      <div className="grid grid-cols-2 gap-3">
-                        {selected.profile.class && (
-                          <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                            <p className="text-xs text-[var(--text-secondary)] mb-0.5">Class</p>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">Class {selected.profile.class}</p>
-                          </div>
-                        )}
-                        {selected.profile.school_board && (
-                          <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                            <p className="text-xs text-[var(--text-secondary)] mb-0.5">Board</p>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">{selected.profile.school_board}</p>
-                          </div>
-                        )}
-                        {selected.profile.days_per_week && (
-                          <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                            <p className="text-xs text-[var(--text-secondary)] mb-0.5">Days/Week</p>
-                            <p className="text-sm font-semibold text-[var(--text-primary)]">{selected.profile.days_per_week} days</p>
-                          </div>
-                        )}
-                      </div>
+// PUT /api/auth/notifications/read
+router.put('/notifications/read', authenticate, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('UPDATE notifications SET is_read=true WHERE user_id=$1', [req.user.id]);
+    res.json({ message: 'Marked all as read' });
+  } finally { client.release(); }
+});
 
-                      {selected.profile.subjects && (
-                        <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                          <p className="text-xs text-[var(--text-secondary)] mb-1">Subjects Needed</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {selected.profile.subjects.split(',').map((s, i) => (
-                              <span key={i} className="text-xs px-2 py-0.5 rounded-lg bg-brand-100 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300 font-medium">
-                                {s.trim()}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
-                      {selected.profile.address && (
-                        <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
-                          <p className="text-xs text-[var(--text-secondary)] mb-0.5">📍 Address</p>
-                          <p className="text-sm text-[var(--text-primary)]">{selected.profile.address}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+// POST /api/auth/register/student — JSON route, no file uploads
+// Separate from teacher route to avoid multer parsing issues
+router.post('/register/student', async (req, res) => {
+  const {
+    email, password, full_name, phone, agency_id = 'default',
+    class: studentClass, subjects, school_board,
+    days_per_week, address, locality,
+  } = req.body;
 
-                  {/* If profile didn't load */}
-                  {!selected.profile && (
-                    <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-center">
-                      <p className="text-sm text-[var(--text-secondary)]">Profile details not available</p>
-                    </div>
-                  )}
-                </>
-              )}
+  if (!email || !password || !full_name || !phone)
+    return res.status(400).json({ error: 'email, password, full_name, phone are required' });
+  if (phone.replace(/\D/g, '').length < 10)
+    return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!studentClass)
+    return res.status(400).json({ error: 'Please specify your class' });
+  if (!subjects || !subjects.trim())
+    return res.status(400).json({ error: 'Please specify subjects you need' });
+  if (!address || !address.trim())
+    return res.status(400).json({ error: 'Address/location is required' });
 
-              {/* Action buttons */}
-              <div className="flex gap-3 pt-2 border-t border-[var(--border)]">
-                <button
-                  onClick={() => action(selected.id, 'reject')}
-                  disabled={processing[selected.id]}
-                  className="btn-danger flex-1 disabled:opacity-50"
-                >
-                  {processing[selected.id] ? '...' : '✕ Reject'}
-                </button>
-                <button
-                  onClick={() => action(selected.id, 'approve')}
-                  disabled={processing[selected.id]}
-                  className="btn-success flex-1 disabled:opacity-50"
-                >
-                  {processing[selected.id] ? '...' : '✓ Approve'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+  const client = await pool.connect();
+  try {
+    const existing = await client.query(
+      'SELECT id, role FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+    if (existing.rows.length > 0) {
+      const existingRole = existing.rows[0].role;
+      return res.status(409).json({ error: `This email is already registered as a ${existingRole}. Please login or use a different email.` });
+    }
+
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      `INSERT INTO users (agency_id, email, password_hash, role, full_name, phone, status)
+       VALUES ($1,$2,$3,'student',$4,$5,'pending')
+       RETURNING id, email, role, full_name, status, agency_id`,
+      [agency_id, email.toLowerCase(), hash, full_name, phone.trim()]
+    );
+    const user = result.rows[0];
+
+    await client.query(
+      `INSERT INTO student_profiles (agency_id, user_id, class, subjects, days_per_week, address, school_board, locality)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [agency_id, user.id, studentClass, subjects.trim(),
+       parseInt(days_per_week) || 3, address.trim(),
+       school_board || '', locality || '']
+    );
+
+    // Send welcome email and admin notification (non-blocking)
+    welcomeStudentEmail({ full_name, email: email.toLowerCase() }).catch(() => {});
+    notifyAdminNewUser({ full_name, email: email.toLowerCase(), role: 'Student', phone }).catch(() => {});
+
+    res.status(201).json({
+      message: 'Registration successful. Please wait for admin approval.',
+      user: { id: user.id, email: user.email, role: user.role, status: user.status },
+    });
+  } catch (err) {
+    console.error('Student registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  } finally {
+    client.release();
+  }
+});
+
+
+// POST /api/auth/upload-doc — upload file to Cloudinary via memory buffer, THEN persist URL to teacher_profiles
+// Uses manual upload to avoid multer-storage-cloudinary issues in production
+router.post('/upload-doc', authenticate, (req, res) => {
+  uploadRegDocs(req, res, async (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ error: err.message || 'Upload failed' });
+    }
+
+    console.log('upload-doc files:', req.files ? Object.keys(req.files) : 'none');
+    console.log('upload-doc body keys:', Object.keys(req.body));
+
+    const files = req.files || {};
+    const result = {};
+
+    try {
+      if (files.aadhar_doc?.[0]?.buffer) {
+        result.aadhar_url = await uploadBufferToSupabase(
+          files.aadhar_doc[0].buffer,
+          docPath('teacher', req.user.id, 'aadhar', extFromName(files.aadhar_doc[0].originalname)),
+          files.aadhar_doc[0].mimetype
+        );
+        console.log('Aadhar uploaded:', result.aadhar_url);
+      }
+      if (files.resume_doc?.[0]?.buffer) {
+        result.resume_url = await uploadBufferToSupabase(
+          files.resume_doc[0].buffer,
+          docPath('teacher', req.user.id, 'resume', extFromName(files.resume_doc[0].originalname)),
+          files.resume_doc[0].mimetype
+        );
+      }
+
+      if (!result.aadhar_url && !result.resume_url) {
+        return res.status(400).json({ error: 'No file received — please select your file again' });
+      }
+
+      // Persist the storage path(s) to the already-created teacher_profiles row.
+      // Only overwrite the column actually uploaded this call.
+      const client = await pool.connect();
+      try {
+        await client.query(
+          `UPDATE teacher_profiles
+             SET aadhar_doc = COALESCE($1, aadhar_doc),
+                 resume_doc = COALESCE($2, resume_doc),
+                 updated_at = NOW()
+           WHERE user_id = $3`,
+          [result.aadhar_url || null, result.resume_url || null, req.user.id]
+        );
+      } finally {
+        client.release();
+      }
+
+      res.json(result);
+    } catch (uploadErr) {
+      console.error('Supabase upload error:', uploadErr);
+      res.status(500).json({ error: 'File upload to cloud failed. Check Supabase Storage credentials.' });
+    }
+  });
+});
+
+
+// POST /api/auth/register/teacher — JSON route after files uploaded separately
+router.post('/register/teacher', async (req, res) => {
+  const {
+    email, password, full_name, phone, agency_id = 'default',
+    subjects, languages, teach_class_from, teach_class_to,
+    education, skills, bio,
+    aadhar_url, resume_url,
+  } = req.body;
+
+  if (!email || !password || !full_name || !phone)
+    return res.status(400).json({ error: 'email, password, full_name, phone are required' });
+  if (phone.replace(/\D/g, '').length < 10)
+    return res.status(400).json({ error: 'A valid 10-digit phone number is required' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  // Aadhar is optional - admin can collect separately
+  if (!subjects)
+    return res.status(400).json({ error: 'Please specify subjects you can teach' });
+  if (!languages)
+    return res.status(400).json({ error: 'Please specify languages you can speak' });
+
+  const client = await pool.connect();
+  try {
+    const existing = await client.query(
+      'SELECT id, role FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+    if (existing.rows.length > 0) {
+      const existingRole = existing.rows[0].role;
+      return res.status(409).json({ error: `This email is already registered as a ${existingRole}. Please login or use a different email.` });
+    }
+
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      `INSERT INTO users (agency_id, email, password_hash, role, full_name, phone, status)
+       VALUES ($1,$2,$3,'teacher',$4,$5,'pending')
+       RETURNING id, email, role, full_name, status, agency_id`,
+      [agency_id, email.toLowerCase(), hash, full_name, phone.trim()]
+    );
+    const user = result.rows[0];
+
+    await client.query(
+      `INSERT INTO teacher_profiles
+         (agency_id, user_id, aadhar_doc, resume_doc, teach_class_from, teach_class_to, subjects, languages, education, skills, bio)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       ON CONFLICT (user_id) DO NOTHING`,
+      [agency_id, user.id,
+       aadhar_url, resume_url || '',
+       teach_class_from || '', teach_class_to || '',
+       subjects, languages,
+       education || '', skills || '', bio || '']
+    );
+
+    // Send welcome email and admin notification (non-blocking)
+    welcomeTeacherEmail({ full_name, email: email.toLowerCase() }).catch(() => {});
+    notifyAdminNewUser({ full_name, email: email.toLowerCase(), role: 'Teacher', phone }).catch(() => {});
+
+    res.status(201).json({
+      message: 'Registration successful. Please wait for admin approval.',
+      user: { id: user.id, email: user.email, role: user.role, status: user.status },
+    });
+  } catch (err) {
+    console.error('Teacher registration error:', err);
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  } finally { client.release(); }
+});
+
+
+// In-memory token store (use Redis in production for multi-instance)
+const resetTokens = new Map(); // token -> { email, agency_id, expires }
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+  const { email, agency_id = 'default' } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      'SELECT id, email, full_name FROM users WHERE email=$1 AND agency_id=$2',
+      [email.toLowerCase(), agency_id]
+    );
+
+    // Always return success (don't reveal if email exists)
+    res.json({ message: 'If that email is registered, a reset link has been sent.' });
+
+    if (result.rows.length === 0) return;
+
+    const user = result.rows[0];
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const expires = Date.now() + 60 * 60 * 1000; // 1 hour
+    resetTokens.set(token, { email: email.toLowerCase(), agency_id, expires });
+
+    const resetLink = `${process.env.CLIENT_URL?.split(',')[0] || 'https://learningfoxx.com'}/reset-password?token=${token}`;
+
+    const { sendResetEmail } = require('../email');
+    sendResetEmail({ full_name: user.full_name, email: user.email, resetLink })
+      .catch(err => console.error('Reset email error:', err.message));
+  } finally { client.release(); }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Token and password are required' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  const data = resetTokens.get(token);
+  if (!data) return res.status(400).json({ error: 'Invalid or expired reset link. Please request a new one.' });
+  if (Date.now() > data.expires) {
+    resetTokens.delete(token);
+    return res.status(400).json({ error: 'This reset link has expired. Please request a new one.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    const hash = await bcrypt.hash(password, 12);
+    const result = await client.query(
+      'UPDATE users SET password_hash=$1, updated_at=NOW() WHERE email=$2 AND agency_id=$3 RETURNING id',
+      [hash, data.email, data.agency_id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+    resetTokens.delete(token);
+    res.json({ message: 'Password reset successfully. You can now login with your new password.' });
+  } finally { client.release(); }
+});
+
+module.exports = router;
