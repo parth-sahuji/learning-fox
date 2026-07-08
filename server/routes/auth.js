@@ -288,9 +288,9 @@ router.post('/register/student', async (req, res) => {
 });
 
 
-// POST /api/auth/upload-doc — upload file to Cloudinary via memory buffer
+// POST /api/auth/upload-doc — upload file to Cloudinary via memory buffer, THEN persist URL to teacher_profiles
 // Uses manual upload to avoid multer-storage-cloudinary issues in production
-router.post('/upload-doc', (req, res) => {
+router.post('/upload-doc', authenticate, (req, res) => {
   uploadRegDocs(req, res, async (err) => {
     if (err) {
       console.error('Multer error:', err);
@@ -322,6 +322,22 @@ router.post('/upload-doc', (req, res) => {
 
       if (!result.aadhar_url && !result.resume_url) {
         return res.status(400).json({ error: 'No file received — please select your file again' });
+      }
+
+      // Persist the URL(s) to the already-created teacher_profiles row.
+      // Only overwrite the column actually uploaded this call.
+      const client = await pool.connect();
+      try {
+        await client.query(
+          `UPDATE teacher_profiles
+             SET aadhar_doc = COALESCE($1, aadhar_doc),
+                 resume_doc = COALESCE($2, resume_doc),
+                 updated_at = NOW()
+           WHERE user_id = $3`,
+          [result.aadhar_url || null, result.resume_url || null, req.user.id]
+        );
+      } finally {
+        client.release();
       }
 
       res.json(result);

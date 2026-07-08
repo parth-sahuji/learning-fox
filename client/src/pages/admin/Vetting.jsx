@@ -7,6 +7,11 @@ export default function Vetting() {
   const [processing, setProcessing] = useState({});
   const [selected, setSelected] = useState(null); // user details panel
   const [toast, setToast] = useState(null);
+  const [queueTab, setQueueTab] = useState('teacher'); // 'teacher' | 'student'
+
+  const teacherQueue = users.filter(u => u.role === 'teacher');
+  const studentQueue = users.filter(u => u.role === 'student');
+  const visibleUsers = queueTab === 'teacher' ? teacherQueue : studentQueue;
 
   const load = () => {
     setLoading(true);
@@ -91,16 +96,39 @@ export default function Vetting() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* LEFT: Queue list */}
         <div className="space-y-3">
+          <div className="flex gap-2 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+            <button
+              onClick={() => setQueueTab('teacher')}
+              className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors
+                ${queueTab === 'teacher'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            >
+              👩‍🏫 Teachers ({teacherQueue.length})
+            </button>
+            <button
+              onClick={() => setQueueTab('student')}
+              className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors
+                ${queueTab === 'student'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            >
+              🎓 Students ({studentQueue.length})
+            </button>
+          </div>
+
           {loading ? (
             [...Array(3)].map((_, i) => <div key={i} className="card shimmer h-24" />)
-          ) : users.length === 0 ? (
+          ) : visibleUsers.length === 0 ? (
             <div className="card text-center py-16">
               <div className="text-5xl mb-3">✅</div>
               <p className="font-semibold text-[var(--text-primary)]">All caught up!</p>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">No pending registrations.</p>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">
+                No pending {queueTab === 'teacher' ? 'teacher' : 'student'} registrations.
+              </p>
             </div>
           ) : (
-            users.map(u => (
+            visibleUsers.map(u => (
               <div
                 key={u.id}
                 onClick={() => loadProfile(u)}
