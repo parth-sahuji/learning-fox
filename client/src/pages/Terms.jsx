@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SUPPORT_EMAIL } from '../components/StickyHeader';
+
+export default function Terms() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]" style={{paddingTop:'68px'}}>
       <div className="max-w-3xl mx-auto px-4 py-10">
