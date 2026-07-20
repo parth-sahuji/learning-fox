@@ -1,6 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { SUPPORT_EMAIL } from '../components/StickyHeader';
+import { CONTACT_EMAIL } from '../components/StickyHeader';
 
 export default function OurRules() {
   return (
@@ -261,7 +261,7 @@ export default function OurRules() {
             <div className="bg-orange-500/20 border border-orange-500/50 rounded-xl p-6 max-w-2xl mx-auto">
               <p className="text-sm text-gray-300">
                 <strong className="text-orange-400">Questions about rules?</strong><br/>
-                Contact admin at <a href={`mailto:${SUPPORT_EMAIL}`} className="text-cyan-400 hover:underline">{SUPPORT_EMAIL}</a> or call <a href="tel:+918340173069" className="text-cyan-400 hover:underline">+91-8340173069</a>
+                Contact admin at <a href={`mailto:${CONTACT_EMAIL}`} className="text-cyan-400 hover:underline">{CONTACT_EMAIL}</a> or call <a href="tel:+918340173069" className="text-cyan-400 hover:underline">+91-8340173069</a>
               </p>
             </div>
           </section>

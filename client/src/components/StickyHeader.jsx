@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
 const SUPPORT_PHONE = '8340173069';
-const SUPPORT_EMAIL = 'support@learningfoxx.com';
+const SUPPORT_EMAIL = 'support@learningfoxx.com'; // account/website problems
+const CONTACT_EMAIL = 'contact-us@learningfoxx.com'; // general enquiries
 const WHATSAPP_NUMBER = '918340173069';
 
 export default function StickyHeader() {
@@ -86,7 +87,7 @@ export default function StickyHeader() {
             <div className="h-8 w-px bg-white/30 hidden sm:block" />
 
             {/* Email */}
-            <a href={`mailto:${SUPPORT_EMAIL}`}
+            <a href={`mailto:${CONTACT_EMAIL}`}
               className="items-center gap-2 group no-underline hidden md:flex">
               <span className="text-lg">✉️</span>
               <div className="flex flex-col leading-none">
@@ -95,7 +96,7 @@ export default function StickyHeader() {
                 </span>
                 <span className="contact-text font-semibold text-white text-xs sm:text-sm"
                   style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
-                  {SUPPORT_EMAIL}
+                  {CONTACT_EMAIL}
                 </span>
               </div>
             </a>
@@ -139,4 +140,4 @@ export default function StickyHeader() {
   );
 }
 
-export { SUPPORT_PHONE, SUPPORT_EMAIL, WHATSAPP_NUMBER };
+export { SUPPORT_PHONE, SUPPORT_EMAIL, CONTACT_EMAIL, WHATSAPP_NUMBER };

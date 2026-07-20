@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import AnimatedBackground from '../components/AnimatedBackground';
-import { SUPPORT_EMAIL } from '../components/StickyHeader';
+import { CONTACT_EMAIL } from '../components/StickyHeader';
 
 const FEATURES = [
   { icon: '🏠', title: 'Home Tuition', desc: 'Expert tutors come to your home — no travel, no stress. Learn in the comfort of your own space.' },
@@ -210,7 +210,7 @@ export default function About() {
             </a>
           </div>
           <p className="text-xs text-[var(--text-secondary)]/60 mt-4">
-            📞 8340173069 · ✉️ {SUPPORT_EMAIL}
+            📞 8340173069 · ✉️ {CONTACT_EMAIL}
           </p>
         </div>
       </section>
