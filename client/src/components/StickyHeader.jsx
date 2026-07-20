@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
 const SUPPORT_PHONE = '8340173069';
-const SUPPORT_EMAIL = 'Ksl.13021412@gmail.com';
+const SUPPORT_EMAIL = 'support@learningfoxx.com';
 const WHATSAPP_NUMBER = '918340173069';
 
 export default function StickyHeader() {

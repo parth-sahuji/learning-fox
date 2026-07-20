@@ -36,9 +36,32 @@ async function initDB() {
     const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
     await client.query(schema);
     console.log('✅ Database schema initialized');
-    // ponytail: admin users are seeded once by hand (SQL in chat), not
-    // auto-created/reset on every boot with a password hardcoded in a public
-    // repo. Upgrade path: a real one-time seed script, if onboarding more admins.
+
+    const bcrypt = require('bcryptjs');
+    const crypto = require('crypto');
+    const adminEmails = [
+      process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com',
+      process.env.ADMIN_EMAIL_2 || 'parthcollege1@gmail.com',
+    ];
+    // ponytail: seeds an admin row only if one doesn't exist yet (fresh DB / disaster recovery).
+    // Existing admin accounts are never touched here — password changes only happen through
+    // the normal login/forgot-password flow, not on every server boot.
+    for (const email of adminEmails) {
+      const ex = await client.query(
+        "SELECT id FROM users WHERE email=$1 AND agency_id='default'", [email]
+      );
+      if (ex.rows.length === 0) {
+        const tempPassword = crypto.randomBytes(9).toString('base64url');
+        const hash = await bcrypt.hash(tempPassword, 12);
+        await client.query(
+          `INSERT INTO users (agency_id, email, password_hash, role, full_name, status)
+           VALUES ('default', $1, $2, 'admin', 'Platform Admin', 'approved')`,
+          [email, hash]
+        );
+        console.log(`✅ Admin seeded: ${email} — temp password: ${tempPassword}`);
+        console.log('   Log in once with it, then use "Forgot password" to set your own.');
+      }
+    }
   } catch (err) {
     console.error('❌ DB init error:', err.message);
     throw err;

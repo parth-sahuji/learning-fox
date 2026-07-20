@@ -69,5 +69,5 @@ Open **http://localhost:5173**
 
 ## 📞 Support
 - Phone: 8340173069
-- Email: Ksl.13021412@gmail.com
+- Email: support@learningfoxx.com
 - WhatsApp: [Chat](https://wa.me/918340173069)

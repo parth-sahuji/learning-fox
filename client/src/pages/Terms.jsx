@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
-
-export default function Terms() {
+import { SUPPORT_EMAIL } from '../components/StickyHeader';
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]" style={{paddingTop:'68px'}}>
       <div className="max-w-3xl mx-auto px-4 py-10">
@@ -122,7 +121,7 @@ export default function Terms() {
             </p>
             <div className="mt-2 flex flex-col gap-1">
               <a href="tel:8340173069" className="text-brand-500 hover:text-brand-600 font-medium">📞 8340173069</a>
-              <a href="mailto:Ksl.13021412@gmail.com" className="text-brand-500 hover:text-brand-600 font-medium">✉️ Ksl.13021412@gmail.com</a>
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-500 hover:text-brand-600 font-medium">✉️ {SUPPORT_EMAIL}</a>
               <a href="https://wa.me/918340173069" className="text-brand-500 hover:text-brand-600 font-medium">💬 WhatsApp: wa.me/918340173069</a>
             </div>
           </section>

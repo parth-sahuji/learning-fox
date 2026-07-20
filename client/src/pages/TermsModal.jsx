@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SUPPORT_EMAIL } from '../components/StickyHeader';
 
 export const TERMS_TEXT = `TERMS & CONDITIONS — LEARNING FOX
 
@@ -33,7 +34,7 @@ Learning Fox is not liable for the quality of tutoring, academic results, or any
 9. AGREEMENT
 By checking the "I agree" box during registration, you confirm that you have read, understood, and agreed to all of the above terms.
 
-For queries: 8340173069 | Ksl.13021412@gmail.com`;
+For queries: 8340173069 | ${SUPPORT_EMAIL}`;
 
 export default function TermsModal({ onClose }) {
   return (

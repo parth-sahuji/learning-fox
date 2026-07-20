@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { SUPPORT_EMAIL } from '../components/StickyHeader';
 
 export default function PendingApproval() {
   const { user, logout } = useAuth();
@@ -25,8 +26,8 @@ export default function PendingApproval() {
           <a href="tel:8340173069" className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600 mb-1">
             📞 8340173069
           </a>
-          <a href="mailto:Ksl.13021412@gmail.com" className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600 mb-1">
-            ✉️ Ksl.13021412@gmail.com
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600 mb-1">
+            ✉️ {SUPPORT_EMAIL}
           </a>
           <a href="https://wa.me/918340173069" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600">
             💬 WhatsApp Us

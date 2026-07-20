@@ -1,17 +1,20 @@
 // Email via Brevo (Sendinblue) Transactional Email API
-// Set BREVO_API_KEY and BREVO_SENDER_EMAIL in Render env vars
-// BREVO_SENDER_EMAIL must be a verified sender in your Brevo account
+// Env vars (set in Render): BREVO_API_KEY, BREVO_SENDER_EMAIL (verified/domain-authenticated
+// sender in Brevo, e.g. no-reply@learningfoxx.com), SUPPORT_EMAIL (shown to users, e.g.
+// support@learningfoxx.com), ADMIN_EMAIL_1 / ADMIN_EMAIL_2 (also used for admin login — see db.js)
 
-const GMAIL_USER = process.env.GMAIL_USER || 'learningfoxx4u@gmail.com'; // shown in email footer only
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@learningfoxx.com'; // shown in email footer + admin alert copy
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
-const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || GMAIL_USER;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com';
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'no-reply@learningfoxx.com';
+// New-registration alerts go to support@ (real inbox, checked regularly) and the account owner's inbox
+const ADMIN_ALERT_RECIPIENTS = [SUPPORT_EMAIL, process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com'];
 
 async function sendEmail({ to, subject, html }) {
   if (!BREVO_API_KEY) {
     console.log(`📧 Email skipped (BREVO_API_KEY not set): ${subject} → ${to}`);
     return;
   }
+  const recipients = Array.isArray(to) ? to : [to];
   try {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
@@ -22,13 +25,13 @@ async function sendEmail({ to, subject, html }) {
       },
       body: JSON.stringify({
         sender: { name: 'Learning Foxx', email: BREVO_SENDER_EMAIL },
-        to: [{ email: to }],
+        to: recipients.map((email) => ({ email })),
         subject,
         htmlContent: html,
       }),
     });
     if (!res.ok) throw new Error(await res.text());
-    console.log(`✅ Email sent via Brevo: ${subject} → ${to}`);
+    console.log(`✅ Email sent via Brevo: ${subject} → ${recipients.join(', ')}`);
   } catch (err) {
     console.error('Brevo email error:', err.message);
   }
@@ -64,7 +67,7 @@ function emailWrapper(content) {
       <div style="padding:16px 24px;border-top:1px solid rgba(239,117,32,0.2);text-align:center;">
         <p style="margin:0;font-size:11px;color:#6b4c2a;">
           📞 8340173069 · 
-          <a href="mailto:${GMAIL_USER}" style="color:#f97316;">${GMAIL_USER}</a> · 
+          <a href="mailto:${SUPPORT_EMAIL}" style="color:#f97316;">${SUPPORT_EMAIL}</a> · 
           <a href="https://wa.me/918340173069" style="color:#25D366;">WhatsApp</a>
         </p>
         <p style="margin:4px 0 0;font-size:10px;color:#4a3520;">
@@ -131,7 +134,7 @@ function welcomeTeacherEmail({ full_name, email }) {
 
 function notifyAdminNewUser({ full_name, email, role, phone }) {
   return sendEmail({
-    to: ADMIN_EMAIL,
+    to: ADMIN_ALERT_RECIPIENTS,
     subject: `🔔 New ${role} registered: ${full_name}`,
     html: emailWrapper(`
       <h2 style="color:#f97316;margin:0 0 16px;">New ${role} Registration</h2>

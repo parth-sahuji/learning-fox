@@ -92,16 +92,29 @@ router.post('/register', (req, res, next) => {
     const user = result.rows[0];
 
     if (role === 'teacher') {
-      // Docs are NOT sent with this request (client posts JSON here, then calls
-      // POST /upload-doc separately with the token below) — req.files was always
-      // undefined at this point, which crashed every teacher registration.
+      // Upload from memory buffer to Supabase Storage (private bucket)
+      const aadharUrl = req.files.aadhar_doc
+        ? await uploadBufferToSupabase(
+            req.files.aadhar_doc[0].buffer,
+            docPath('teacher', user.id, 'aadhar', extFromName(req.files.aadhar_doc[0].originalname)),
+            req.files.aadhar_doc[0].mimetype
+          )
+        : '';
+      const resumeUrl = req.files.resume_doc
+        ? await uploadBufferToSupabase(
+            req.files.resume_doc[0].buffer,
+            docPath('teacher', user.id, 'resume', extFromName(req.files.resume_doc[0].originalname)),
+            req.files.resume_doc[0].mimetype
+          )
+        : '';
       await client.query(
         `INSERT INTO teacher_profiles
            (agency_id, user_id, aadhar_doc, resume_doc, teach_class_from, teach_class_to, subjects, languages, education, skills, bio)
-         VALUES ($1,$2,'','',$3,$4,$5,$6,$7,$8,$9)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
          ON CONFLICT (user_id) DO NOTHING`,
-        [agency_id, user.id, class_from, class_to, subjects_taught,
-         languages || '', education || '', skills || '', bio || '']
+        [agency_id, user.id, aadharUrl, resumeUrl,
+         class_from, class_to, subjects_taught, languages || '',
+         education || '', skills || '', bio || '']
       );
     } else {
       await client.query(
@@ -116,15 +129,8 @@ router.post('/register', (req, res, next) => {
       );
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role,
-        status: user.status, agency_id: user.agency_id, full_name: user.full_name },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
     res.status(201).json({
       message: 'Registration successful. Please wait for admin approval.',
-      token,
       user: { id: user.id, email: user.email, role: user.role, status: user.status },
     });
   } catch (err) {
