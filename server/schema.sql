@@ -109,4 +109,6 @@ DO $$ BEGIN
   BEGIN ALTER TABLE teacher_profiles ALTER COLUMN resume_doc TYPE TEXT USING resume_doc::TEXT; EXCEPTION WHEN others THEN NULL; END;
   BEGIN ALTER TABLE student_profiles ADD COLUMN address TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
   BEGIN ALTER TABLE student_profiles ADD COLUMN days_per_week INTEGER DEFAULT 3; EXCEPTION WHEN duplicate_column THEN NULL; END;
+  BEGIN ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END;
+  BEGIN ALTER TABLE users ADD COLUMN lockout_until TIMESTAMP WITH TIME ZONE; EXCEPTION WHEN duplicate_column THEN NULL; END;
 END $$;

@@ -39,10 +39,10 @@ async function initDB() {
 
     const bcrypt = require('bcryptjs');
     const crypto = require('crypto');
-    const adminEmails = [
-      process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com',
-      process.env.ADMIN_EMAIL_2 || 'parthcollege1@gmail.com',
-    ];
+    const adminEmails = [process.env.ADMIN_EMAIL_1, process.env.ADMIN_EMAIL_2].filter(Boolean);
+    if (adminEmails.length === 0) {
+      console.warn('⚠️  ADMIN_EMAIL_1/ADMIN_EMAIL_2 not set — skipping admin seed (no hardcoded fallback).');
+    }
     // ponytail: seeds an admin row only if one doesn't exist yet (fresh DB / disaster recovery).
     // Existing admin accounts are never touched here — password changes only happen through
     // the normal login/forgot-password flow, not on every server boot.

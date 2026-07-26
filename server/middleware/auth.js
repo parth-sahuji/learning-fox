@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken');
 const { pool } = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'tutorapp-super-secret-jwt-key-change-in-prod';
+// ponytail: no fallback. A hardcoded secret in a public repo means anyone can
+// forge admin tokens the moment this env var is unset — fail the boot instead.
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET environment variable is not set');
+  process.exit(1);
+}
 
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -11,7 +17,7 @@ function authenticate(req, res, next) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     req.user = decoded;
     next();
   } catch (err) {

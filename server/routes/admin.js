@@ -3,6 +3,8 @@ const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole } = require('../middleware/auth');
 const { getSignedUrl } = require('../supabaseStorage');
+const { validate } = require('../validation/validate');
+const schemas = require('../validation/schemas');
 
 const router = express.Router();
 
@@ -50,8 +52,38 @@ router.get('/pending', async (req, res) => {
   }
 });
 
+// GET /api/admin/user-profile/:id — full profile for vetting detail panel
+router.get('/user-profile/:id', validate(schemas.idParam, 'params'), async (req, res) => {
+  const { agency_id } = req.user;
+  const client = await pool.connect();
+  try {
+    const user = await client.query(
+      'SELECT id, email, role, full_name, phone, status, created_at FROM users WHERE id=$1 AND agency_id=$2',
+      [req.params.id, agency_id]
+    );
+    if (!user.rows[0]) return res.status(404).json({ error: 'User not found' });
+
+    let profile = {};
+    if (user.rows[0].role === 'teacher') {
+      const r = await client.query('SELECT * FROM teacher_profiles WHERE user_id=$1', [req.params.id]);
+      profile = r.rows[0] || {};
+      // aadhar_doc/resume_doc are private Supabase Storage paths — resolve to short-lived signed URLs
+      if (profile.aadhar_doc) profile.aadhar_doc = (await getSignedUrl(profile.aadhar_doc)) || '';
+      if (profile.resume_doc) profile.resume_doc = (await getSignedUrl(profile.resume_doc)) || '';
+    } else if (user.rows[0].role === 'student') {
+      const r = await client.query('SELECT * FROM student_profiles WHERE user_id=$1', [req.params.id]);
+      profile = r.rows[0] || {};
+    }
+
+    res.json({ user: user.rows[0], profile });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load profile' });
+  } finally { client.release(); }
+});
+
 // PUT /api/admin/users/:id/approve
-router.put('/users/:id/approve', async (req, res) => {
+router.put('/users/:id/approve', validate(schemas.idParam, 'params'), async (req, res) => {
   const { agency_id } = req.user;
   const client = await pool.connect();
   try {
@@ -69,10 +101,9 @@ router.put('/users/:id/approve', async (req, res) => {
       [agency_id, req.params.id]
     );
 
-    // Send approval email (non-blocking)
-    if (result.rows[0]) {
-      approvalEmail({ full_name: result.rows[0].full_name, email: result.rows[0].email, role: result.rows[0].role }).catch(() => {});
-    }
+    // Send approval email (non-blocking, but logged if it fails)
+    approvalEmail({ full_name: result.rows[0].full_name, email: result.rows[0].email, role: result.rows[0].role })
+      .catch(err => console.error('Approval email failed:', err.message));
 
     res.json({ user: result.rows[0] });
   } finally {
@@ -81,7 +112,7 @@ router.put('/users/:id/approve', async (req, res) => {
 });
 
 // PUT /api/admin/users/:id/reject
-router.put('/users/:id/reject', async (req, res) => {
+router.put('/users/:id/reject', validate(schemas.idParam, 'params'), async (req, res) => {
   const { agency_id } = req.user;
   const client = await pool.connect();
   try {
@@ -114,6 +145,9 @@ router.get('/users', async (req, res) => {
                  FROM users WHERE agency_id=$1 AND status='approved'`;
     const params = [agency_id];
     if (role) {
+      if (!['teacher', 'student', 'admin'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role filter' });
+      }
       query += ` AND role=$2`;
       params.push(role);
     }
@@ -150,13 +184,9 @@ router.get('/assignments', async (req, res) => {
 });
 
 // POST /api/admin/assignments - Create assignment (The Matcher)
-router.post('/assignments', async (req, res) => {
+router.post('/assignments', validate(schemas.createAssignment), async (req, res) => {
   const { agency_id } = req.user;
   const { student_id, teacher_id, subject, monthly_fee } = req.body;
-
-  if (!student_id || !teacher_id || !subject) {
-    return res.status(400).json({ error: 'student_id, teacher_id, subject are required' });
-  }
 
   const client = await pool.connect();
   try {
@@ -213,13 +243,9 @@ router.post('/assignments', async (req, res) => {
 });
 
 // PUT /api/admin/assignments/:id/fee - Set monthly fee
-router.put('/assignments/:id/fee', async (req, res) => {
+router.put('/assignments/:id/fee', validate(schemas.idParam, 'params'), validate(schemas.setFee), async (req, res) => {
   const { agency_id } = req.user;
   const { monthly_fee } = req.body;
-
-  if (monthly_fee === undefined || monthly_fee < 0) {
-    return res.status(400).json({ error: 'Valid monthly_fee required' });
-  }
 
   const client = await pool.connect();
   try {
@@ -244,7 +270,7 @@ router.put('/assignments/:id/fee', async (req, res) => {
 });
 
 // PUT /api/admin/assignments/:id/status
-router.put('/assignments/:id/status', async (req, res) => {
+router.put('/assignments/:id/status', validate(schemas.idParam, 'params'), validate(schemas.setAssignmentStatus), async (req, res) => {
   const { agency_id } = req.user;
   const { status } = req.body;
   const client = await pool.connect();
@@ -284,7 +310,7 @@ router.get('/fees', async (req, res) => {
 });
 
 // POST /api/admin/fees/trigger - Manually trigger monthly fee records
-router.post('/fees/trigger', async (req, res) => {
+router.post('/fees/trigger', validate(schemas.feeTrigger), async (req, res) => {
   const { agency_id } = req.user;
   const { month_year } = req.body; // format: YYYY-MM
   const client = await pool.connect();
@@ -340,37 +366,3 @@ router.get('/all-users', async (req, res) => {
 });
 
 module.exports = router;
-
-// GET /api/admin/user-profile/:id — full profile for vetting detail panel
-router.get('/user-profile/:id', async (req, res) => {
-  const { agency_id } = req.user;
-  const client = await pool.connect();
-  try {
-    const user = await client.query(
-      'SELECT id, email, role, full_name, phone, status, created_at FROM users WHERE id=$1 AND agency_id=$2',
-      [req.params.id, agency_id]
-    );
-    if (!user.rows[0]) return res.status(404).json({ error: 'User not found' });
-
-    let profile = {};
-    if (user.rows[0].role === 'teacher') {
-      const r = await client.query('SELECT * FROM teacher_profiles WHERE user_id=$1', [req.params.id]);
-      profile = r.rows[0] || {};
-      // aadhar_doc/resume_doc are private Supabase Storage paths — resolve to short-lived signed URLs
-      if (profile.aadhar_doc) profile.aadhar_doc = (await getSignedUrl(profile.aadhar_doc)) || '';
-      if (profile.resume_doc) profile.resume_doc = (await getSignedUrl(profile.resume_doc)) || '';
-    } else if (user.rows[0].role === 'student') {
-      const r = await client.query('SELECT * FROM student_profiles WHERE user_id=$1', [req.params.id]);
-      profile = r.rows[0] || {};
-    }
-
-    res.json({ user: user.rows[0], profile });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to load profile' });
-  } finally { client.release(); }
-});
-
-// (Old Cloudinary filename-lookup route removed — docs are now served via
-// signed URLs returned directly from /user-profile/:id, since aadhar_doc/resume_doc
-// in the DB are private Supabase Storage paths, not public URLs.)

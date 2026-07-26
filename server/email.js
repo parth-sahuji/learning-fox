@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@learningfoxx.com'; /
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'no-reply@learningfoxx.com';
 // New-registration alerts go to support@ (real inbox, checked regularly) and the account owner's inbox
-const ADMIN_ALERT_RECIPIENTS = [SUPPORT_EMAIL, process.env.ADMIN_EMAIL_1 || 'Ksl.13021412@gmail.com'];
+const ADMIN_ALERT_RECIPIENTS = [SUPPORT_EMAIL, process.env.ADMIN_EMAIL_1].filter(Boolean);
 
 async function sendEmail({ to, subject, html }) {
   if (!BREVO_API_KEY) {

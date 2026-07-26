@@ -1,8 +1,11 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole, requireApproved } = require('../middleware/auth');
-const { uploadPortfolio, cloudinary, uploadBufferToCloudinary } = require('../cloudinary');
+const { uploadPortfolio, uploadRegDocs, cloudinary, uploadBufferToCloudinary, PORTFOLIO_MIMES, REG_DOC_MIMES } = require('../cloudinary');
 const { uploadBufferToSupabase, getSignedUrl, docPath, extFromName } = require('../supabaseStorage');
+const { requireRealType } = require('../utils/fileSignature');
+const { validate } = require('../validation/validate');
+const schemas = require('../validation/schemas');
 
 const router = express.Router();
 router.use(authenticate, requireRole('teacher'));
@@ -53,7 +56,7 @@ router.get('/profile', async (req, res) => {
   } finally { client.release(); }
 });
 
-router.put('/profile', async (req, res) => {
+router.put('/profile', validate(schemas.teacherProfileUpdate), async (req, res) => {
   const { id: user_id, agency_id } = req.user;
   const { full_name, phone, education, skills, available_slots, bio, class_from, class_to, subjects_taught, languages } = req.body;
   const client = await pool.connect();
@@ -64,17 +67,20 @@ router.put('/profile', async (req, res) => {
         [full_name, phone, user_id]
       );
     }
+    // ponytail: column names below (teach_class_from/teach_class_to/subjects) are the
+    // real schema.sql columns — the previous version wrote to class_from/class_to/
+    // subjects_taught, which don't exist on teacher_profiles, so every save 500'd.
     await client.query(
-      `INSERT INTO teacher_profiles (agency_id, user_id, education, skills, available_slots, bio, class_from, class_to, subjects_taught, languages)
+      `INSERT INTO teacher_profiles (agency_id, user_id, education, skills, available_slots, bio, teach_class_from, teach_class_to, subjects, languages)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT (user_id) DO UPDATE SET
          education=COALESCE($3, teacher_profiles.education),
          skills=COALESCE($4, teacher_profiles.skills),
          available_slots=COALESCE($5, teacher_profiles.available_slots),
          bio=COALESCE($6, teacher_profiles.bio),
-         class_from=COALESCE($7, teacher_profiles.class_from),
-         class_to=COALESCE($8, teacher_profiles.class_to),
-         subjects_taught=COALESCE($9, teacher_profiles.subjects_taught),
+         teach_class_from=COALESCE($7, teacher_profiles.teach_class_from),
+         teach_class_to=COALESCE($8, teacher_profiles.teach_class_to),
+         subjects=COALESCE($9, teacher_profiles.subjects),
          languages=COALESCE($10, teacher_profiles.languages),
          updated_at=NOW()`,
       [agency_id, user_id, education, skills,
@@ -94,6 +100,13 @@ router.post('/portfolio', requireApproved, (req, res, next) => {
 }, async (req, res) => {
   const { id: user_id, agency_id } = req.user;
   if (!req.files || req.files.length === 0) return res.status(400).json({ error: 'No files uploaded' });
+
+  try {
+    for (const f of req.files) requireRealType(f.buffer, PORTFOLIO_MIMES, f.originalname);
+  } catch (err) {
+    return res.status(err.statusCode || 400).json({ error: err.message });
+  }
+
   const client = await pool.connect();
   try {
     const existing = await client.query('SELECT portfolio_docs FROM teacher_profiles WHERE user_id=$1', [user_id]);
@@ -135,7 +148,8 @@ router.delete('/portfolio/:filename', requireApproved, async (req, res) => {
 
     // Delete from Cloudinary
     if (toDelete?.public_id) {
-      try { await cloudinary.uploader.destroy(toDelete.public_id, { resource_type: 'raw' }); } catch {}
+      try { await cloudinary.uploader.destroy(toDelete.public_id, { resource_type: 'raw' }); }
+      catch (err) { console.error('Cloudinary destroy failed (DB reference removed anyway):', err.message); }
     }
 
     await client.query('UPDATE teacher_profiles SET portfolio_docs=$1, updated_at=NOW() WHERE user_id=$2', [JSON.stringify(updated), user_id]);
@@ -158,7 +172,7 @@ router.get('/document/:filename', async (req, res) => {
 });
 
 // POST /api/teacher/fees/:id/confirm
-router.post('/fees/:fee_record_id/confirm', requireApproved, async (req, res) => {
+router.post('/fees/:fee_record_id/confirm', requireApproved, validate(schemas.feeRecordIdParam, 'params'), async (req, res) => {
   const { id: teacher_id, agency_id } = req.user;
   const client = await pool.connect();
   try {
@@ -210,7 +224,6 @@ router.get('/fees', requireApproved, async (req, res) => {
 
 // POST /api/teacher/upload-aadhar — upload Aadhar after registration
 router.post('/upload-aadhar', requireApproved, (req, res, next) => {
-  const { uploadRegDocs } = require('../cloudinary');
   uploadRegDocs(req, res, next);
 }, async (req, res) => {
   const { id: user_id, agency_id } = req.user;
@@ -218,6 +231,7 @@ router.post('/upload-aadhar', requireApproved, (req, res, next) => {
   if (!files.aadhar_doc?.[0]) return res.status(400).json({ error: 'No file received' });
   const client = await pool.connect();
   try {
+    requireRealType(files.aadhar_doc[0].buffer, REG_DOC_MIMES, 'Aadhar document');
     const path = await uploadBufferToSupabase(
       files.aadhar_doc[0].buffer,
       docPath('teacher', user_id, 'aadhar', extFromName(files.aadhar_doc[0].originalname)),
@@ -232,14 +246,13 @@ router.post('/upload-aadhar', requireApproved, (req, res, next) => {
     res.json({ message: 'Aadhar uploaded successfully', url });
   } catch(err) {
     console.error(err);
-    res.status(500).json({ error: 'Upload failed' });
+    res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : 'Upload failed' });
   } finally { client.release(); }
 });
 
 
 // POST /api/teacher/upload-resume
 router.post('/upload-resume', requireApproved, (req, res, next) => {
-  const { uploadRegDocs } = require('../cloudinary');
   uploadRegDocs(req, res, next);
 }, async (req, res) => {
   const { id: user_id, agency_id } = req.user;
@@ -248,6 +261,7 @@ router.post('/upload-resume', requireApproved, (req, res, next) => {
   if (!fileKey) return res.status(400).json({ error: 'No file received' });
   const client = await pool.connect();
   try {
+    requireRealType(files[fileKey][0].buffer, REG_DOC_MIMES, 'Resume');
     const path = await uploadBufferToSupabase(
       files[fileKey][0].buffer,
       docPath('teacher', user_id, 'resume', extFromName(files[fileKey][0].originalname)),
@@ -261,7 +275,8 @@ router.post('/upload-resume', requireApproved, (req, res, next) => {
     const url = await getSignedUrl(path);
     res.json({ message: 'Resume uploaded successfully', url });
   } catch(err) {
-    res.status(500).json({ error: 'Upload failed' });
+    console.error(err);
+    res.status(err.statusCode || 500).json({ error: err.statusCode ? err.message : 'Upload failed' });
   } finally { client.release(); }
 });
 

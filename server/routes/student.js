@@ -1,6 +1,8 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole, requireApproved } = require('../middleware/auth');
+const { validate } = require('../validation/validate');
+const schemas = require('../validation/schemas');
 
 const router = express.Router();
 router.use(authenticate, requireRole('student'));
@@ -45,7 +47,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // PUT /api/student/profile
-router.put('/profile', async (req, res) => {
+router.put('/profile', validate(schemas.studentProfileUpdate), async (req, res) => {
   const { id: user_id, agency_id } = req.user;
   const { full_name, phone, class: studentClass, subjects, locality, address, school_board, days_per_week } = req.body;
   const client = await pool.connect();
@@ -67,14 +69,14 @@ router.put('/profile', async (req, res) => {
          school_board=COALESCE($7,student_profiles.school_board),
          days_per_week=COALESCE($8,student_profiles.days_per_week),
          updated_at=NOW()`,
-      [agency_id, user_id, studentClass, subjects, locality, address, days_per_week ? parseInt(days_per_week) : null, school_board]
+      [agency_id, user_id, studentClass, subjects, locality, address, days_per_week ?? null, school_board]
     );
     res.json({ message: 'Profile updated.' });
   } finally { client.release(); }
 });
 
 // POST /api/student/fees/:id/confirm
-router.post('/fees/:fee_record_id/confirm', requireApproved, async (req, res) => {
+router.post('/fees/:fee_record_id/confirm', requireApproved, validate(schemas.feeRecordIdParam, 'params'), async (req, res) => {
   const { id: student_id, agency_id } = req.user;
   const client = await pool.connect();
   try {
