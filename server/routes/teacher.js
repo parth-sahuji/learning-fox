@@ -1,8 +1,8 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authenticate, requireRole, requireApproved } = require('../middleware/auth');
-const { uploadPortfolio, uploadRegDocs, cloudinary, uploadBufferToCloudinary, PORTFOLIO_MIMES, REG_DOC_MIMES } = require('../cloudinary');
-const { uploadBufferToSupabase, getSignedUrl, docPath, extFromName } = require('../supabaseStorage');
+const { uploadPortfolio, uploadRegDocs, PORTFOLIO_MIMES, REG_DOC_MIMES } = require('../multerConfig');
+const { uploadBufferToSupabase, getSignedUrl, getPublicUrl, deleteFromSupabase, docPath, extFromName, PORTFOLIO_BUCKET } = require('../supabaseStorage');
 const { requireRealType } = require('../utils/fileSignature');
 const { validate } = require('../validation/validate');
 const schemas = require('../validation/schemas');
@@ -91,7 +91,7 @@ router.put('/profile', validate(schemas.teacherProfileUpdate), async (req, res) 
   } finally { client.release(); }
 });
 
-// POST /api/teacher/portfolio — upload to Cloudinary
+// POST /api/teacher/portfolio — upload to Supabase Storage (public bucket)
 router.post('/portfolio', requireApproved, (req, res, next) => {
   uploadPortfolio(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
@@ -111,15 +111,16 @@ router.post('/portfolio', requireApproved, (req, res, next) => {
   try {
     const existing = await client.query('SELECT portfolio_docs FROM teacher_profiles WHERE user_id=$1', [user_id]);
     const existingDocs = existing.rows[0]?.portfolio_docs || [];
-    // Upload each file from disk to Cloudinary
+    // Upload each file to Supabase Storage's public 'portfolio' bucket
     const newDocs = await Promise.all(req.files.map(async f => {
-      const url = await uploadBufferToCloudinary(f.buffer, 'learningfox/portfolio', f.originalname);
       const safeName = Date.now() + '_' + f.originalname.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const storagePath = `teacher/${user_id}/portfolio/${safeName}`;
+      await uploadBufferToSupabase(f.buffer, storagePath, f.mimetype, PORTFOLIO_BUCKET);
       return {
         filename:     safeName,
         originalname: f.originalname,
-        url,
-        public_id:    url,
+        url:          getPublicUrl(storagePath),
+        storage_path: storagePath,
         mimetype:     f.mimetype,
         size:         f.size,
         uploaded_at:  new Date().toISOString(),
@@ -135,7 +136,7 @@ router.post('/portfolio', requireApproved, (req, res, next) => {
   } finally { client.release(); }
 });
 
-// DELETE /api/teacher/portfolio/:public_id — delete from Cloudinary
+// DELETE /api/teacher/portfolio/:filename — delete from Supabase Storage
 router.delete('/portfolio/:filename', requireApproved, async (req, res) => {
   const { id: user_id } = req.user;
   const { filename } = req.params;
@@ -146,10 +147,11 @@ router.delete('/portfolio/:filename', requireApproved, async (req, res) => {
     const toDelete = docs.find(d => d.filename === filename);
     const updated  = docs.filter(d => d.filename !== filename);
 
-    // Delete from Cloudinary
-    if (toDelete?.public_id) {
-      try { await cloudinary.uploader.destroy(toDelete.public_id, { resource_type: 'raw' }); }
-      catch (err) { console.error('Cloudinary destroy failed (DB reference removed anyway):', err.message); }
+    // Delete from storage. Pre-migration entries (uploaded when this was still Cloudinary)
+    // won't have storage_path — nothing to clean up there but the file itself, harmless to skip.
+    if (toDelete?.storage_path) {
+      try { await deleteFromSupabase(toDelete.storage_path, PORTFOLIO_BUCKET); }
+      catch (err) { console.error('Supabase delete failed (DB reference removed anyway):', err.message); }
     }
 
     await client.query('UPDATE teacher_profiles SET portfolio_docs=$1, updated_at=NOW() WHERE user_id=$2', [JSON.stringify(updated), user_id]);
@@ -157,7 +159,7 @@ router.delete('/portfolio/:filename', requireApproved, async (req, res) => {
   } finally { client.release(); }
 });
 
-// GET /api/teacher/document/:filename — redirect to Cloudinary URL
+// GET /api/teacher/document/:filename — redirect to the file's public URL
 router.get('/document/:filename', async (req, res) => {
   const { id: user_id } = req.user;
   const { filename } = req.params;
