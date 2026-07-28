@@ -123,8 +123,15 @@ router.post('/register', (req, res, next) => {
     }
 
     await client.query('COMMIT');
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role,
+        status: user.status, agency_id: user.agency_id, full_name: user.full_name },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     res.status(201).json({
       message: 'Registration successful. Please wait for admin approval.',
+      token,
       user: { id: user.id, email: user.email, role: user.role, status: user.status },
     });
   } catch (err) {

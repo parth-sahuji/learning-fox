@@ -1,11 +1,12 @@
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SUPPORT_EMAIL } from '../components/StickyHeader';
 
 export default function PendingApproval() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const isRejected = user?.status === 'rejected';
+  const docUploadErrors = useLocation().state?.docUploadErrors || [];
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--bg-primary)]" style={{paddingTop:'68px'}}>
@@ -20,6 +21,12 @@ export default function PendingApproval() {
             ? 'Unfortunately your registration was not approved. Please contact support for more information.'
             : 'Your account has been submitted and is pending admin review. We\'ll notify you once approved (usually 1–2 business days).'}
         </p>
+
+        {docUploadErrors.length > 0 && (
+          <div className="p-3 rounded-xl bg-red-950/50 border border-red-700 mb-4 text-left text-xs text-red-400">
+            ⚠️ Some documents didn't upload ({docUploadErrors.join('; ')}). Please email them to support instead.
+          </div>
+        )}
 
         <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] mb-6 text-left">
           <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-2">Contact Support</p>

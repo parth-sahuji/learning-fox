@@ -93,9 +93,13 @@ export default function Register() {
   };
 
   // ── Step 1 → 2 ──────────────────────────────────────────────────
+  // Mirrors server/validation/schemas.js so bad input is caught here, not at final submit.
   const handleStep1 = e => {
     e.preventDefault();
     setError('');
+    if (!/^[\p{L} .'-]+$/u.test(form.full_name.trim())) return setError("Name can only contain letters, spaces, and . ' -");
+    const phoneDigits = form.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) return setError('A valid phone number is required.');
     if (form.password.length < 8) return setError('Password must be at least 8 characters.');
     if (form.password !== form.confirm_password) return setError('Passwords do not match.');
     setStep(2);
@@ -107,6 +111,7 @@ export default function Register() {
     setError('');
     if (role === 'teacher') {
       if (!teacherProfile.subjects.length) return setError('Select at least one subject.');
+      if (!teacherProfile.languages.trim()) return setError('Please specify languages you can speak.');
       setStep(3);
     } else {
       if (!studentProfile.subjects.length) return setError('Select at least one subject.');
@@ -151,33 +156,31 @@ export default function Register() {
       const token = data.token;
       localStorage.setItem('tutorapp_token', token);
 
-      // 2. Upload docs (teacher)
+      // 2. Upload docs (teacher) — non-blocking (account is already created; don't strand
+      // the user on a form that would just hit "already registered" on resubmit), but we
+      // do track and report failures instead of pretending the docs were saved.
+      const docUploadErrors = [];
       if (role === 'teacher') {
-        if (resumeFile) {
+        for (const [field, file] of [['resume_doc', resumeFile], ['aadhar_doc', aadharFile]]) {
+          if (!file) continue;
           const fd = new FormData();
-          fd.append('resume_doc', resumeFile);
+          fd.append(field, file);
           await api.post('/auth/upload-doc', fd, {
             headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
-          }).catch(() => {}); // non-blocking
-        }
-        if (aadharFile) {
-          const fd = new FormData();
-          fd.append('aadhar_doc', aadharFile);
-          await api.post('/auth/upload-doc', fd, {
-            headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` },
-          }).catch(() => {}); // non-blocking
+          }).catch(err => docUploadErrors.push(`${file.name}: ${err.response?.data?.error || 'upload failed'}`));
         }
       }
 
-      navigate('/pending-approval', { replace: true });
+      navigate('/pending-approval', { replace: true, state: { docUploadErrors } });
     } catch (err) {
-      const msg = err.response?.data?.error || '';
+      const data = err.response?.data;
+      const msg = data?.error || '';
       if (msg.toLowerCase().includes('already')) {
         setError('An account with this email already exists. Try logging in.');
       } else if (!err.response) {
         setError('Cannot connect to server. Please try again.');
       } else {
-        setError(msg || 'Registration failed. Please try again.');
+        setError(data?.details?.[0]?.message || msg || 'Registration failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -401,9 +404,12 @@ export default function Register() {
           <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-white/20 hover:border-brand-400 rounded-xl p-5 cursor-pointer transition-all">
             <span className="text-3xl">{resumeFile ? '✅' : '📄'}</span>
             <span className="text-sm text-[var(--text-secondary)]">
-              {resumeFile ? resumeFile.name : 'Click to upload PDF or Word doc'}
+              {resumeFile ? resumeFile.name : 'Click to upload PDF'}
             </span>
-            <input type="file" accept=".pdf,.doc,.docx" className="hidden"
+            {/* ponytail: PDF only — server/utils/fileSignature.js has no doc/docx magic-byte check,
+                so those were always silently rejected. Add a signature + REG_DOC_MIMES entry to
+                support them for real. */}
+            <input type="file" accept=".pdf" className="hidden"
               onChange={e => setResumeFile(e.target.files[0])} />
           </label>
         </div>
