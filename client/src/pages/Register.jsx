@@ -171,7 +171,7 @@ export default function Register() {
         }
       }
 
-      navigate('/pending-approval', { replace: true, state: { docUploadErrors } });
+      navigate('/pending', { replace: true, state: { docUploadErrors } });
     } catch (err) {
       const data = err.response?.data;
       const msg = data?.error || '';
