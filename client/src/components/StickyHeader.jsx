@@ -65,6 +65,12 @@ export default function StickyHeader() {
             </span>
           </Link>
 
+          {/* Find a Tutor CTA */}
+          <Link to="/register?role=student"
+            className="hidden sm:flex items-center px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold no-underline transition-all flex-shrink-0">
+            Find a Tutor
+          </Link>
+
           {/* CENTER: Contact info — THE HERO */}
           <div className="flex items-center gap-2 sm:gap-5 flex-1 justify-center">
 

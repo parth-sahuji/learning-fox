@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AnimatedBackground from '../components/AnimatedBackground';
 import api from '../api';
 
@@ -51,7 +51,8 @@ const ErrorBox = ({ error }) => error ? (
 export default function Register() {
   const navigate = useNavigate();
 
-  const [role, setRole] = useState('teacher'); // 'teacher' | 'student'
+  const [searchParams] = useSearchParams();
+  const [role, setRole] = useState(searchParams.get('role') === 'teacher' ? 'teacher' : 'student'); // default student — teachers have their own path in
   const [step, setStep] = useState(1); // 1 = basic, 2 = profile, 3 = docs (teacher only)
 
   // Step 1 — common

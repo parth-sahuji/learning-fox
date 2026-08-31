@@ -44,11 +44,11 @@ export default function About() {
             Quality education, delivered to your doorstep — affordable, safe, and reliable.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link to="/register" className="btn-primary px-8 py-3 text-base">
-              🦊 Get Started — It's Free
+            <Link to="/register?role=student" className="btn-primary px-8 py-3 text-base">
+              🦊 Find a Tutor — It's Free
             </Link>
-            <Link to="/login" className="btn-secondary px-8 py-3 text-base">
-              Sign In
+            <Link to="/register?role=teacher" className="btn-secondary px-8 py-3 text-base">
+              I'm a Teacher
             </Link>
           </div>
 
