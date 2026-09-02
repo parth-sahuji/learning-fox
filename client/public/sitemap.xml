@@ -1,144 +1,214 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  
+
   <url>
     <loc>https://www.learningfoxx.com/</loc>
-    <lastmod>2026-04-19</lastmod>
+    <lastmod>2026-09-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/find-tutor</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/become-tutor</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/tutors</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
+
   <url>
     <loc>https://www.learningfoxx.com/about</loc>
-    <lastmod>2026-04-19</lastmod>
+    <lastmod>2026-09-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <url>
     <loc>https://www.learningfoxx.com/how-it-works</loc>
-    <lastmod>2026-04-19</lastmod>
+    <lastmod>2026-09-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <url>
     <loc>https://www.learningfoxx.com/our-rules</loc>
-    <lastmod>2026-04-19</lastmod>
+    <lastmod>2026-09-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  
+
   <url>
-    <loc>https://www.learningfoxx.com/contact</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://www.learningfoxx.com/locations</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/locations/india/pune</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/locations/india/mumbai</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/locations/india/delhi</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/locations/usa/new-york</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/locations/usa/los-angeles</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.learningfoxx.com/locations/uk/london</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
+
   <url>
     <loc>https://www.learningfoxx.com/subjects/mathematics</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
-  
+
   <url>
     <loc>https://www.learningfoxx.com/subjects/science</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
-  
+
   <url>
     <loc>https://www.learningfoxx.com/subjects/english</loc>
-    <lastmod>2026-04-19</lastmod>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/mumbai</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/pune</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/delhi</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/bangalore</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/hyderabad</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/chennai</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/kolkata</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/india/ahmedabad</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/usa/new-york</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/usa/los-angeles</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/locations/uk/london</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/mumbai</loc>
+    <lastmod>2026-09-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <url>
-    <loc>https://www.learningfoxx.com/blog</loc>
-    <lastmod>2026-04-19</lastmod>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/pune</loc>
+    <lastmod>2026-09-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <url>
-    <loc>https://www.learningfoxx.com/terms</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.4</priority>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/delhi</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
-  
+
   <url>
-    <loc>https://www.learningfoxx.com/privacy</loc>
-    <lastmod>2026-04-19</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.4</priority>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/bangalore</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
-  
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/hyderabad</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/chennai</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/kolkata</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/india/ahmedabad</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/usa/new-york</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/usa/los-angeles</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.learningfoxx.com/tutor-jobs/uk/london</loc>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>

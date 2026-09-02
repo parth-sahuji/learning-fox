@@ -26,7 +26,7 @@ export default function EnglishTutors() {
             <p className="text-xl text-gray-200 mb-10 max-w-3xl mx-auto">
               Expert Language & Literature tutoring for all levels - Reading, Writing, Speaking
             </p>
-            <Link to="/find-tutor" className="inline-block bg-gradient-to-r from-yellow-400 to-pink-500 text-gray-900 px-10 py-5 rounded-full font-bold hover:shadow-2xl hover:scale-105 transition-all">
+            <Link to="/register?role=student" className="inline-block bg-gradient-to-r from-yellow-400 to-pink-500 text-gray-900 px-10 py-5 rounded-full font-bold hover:shadow-2xl hover:scale-105 transition-all">
               Find an English Tutor
             </Link>
           </div>
@@ -152,7 +152,7 @@ export default function EnglishTutors() {
             <p className="text-xl text-gray-600 mb-10">
               Connect with expert English tutors who inspire a love for reading and writing
             </p>
-            <Link to="/find-tutor" className="inline-block bg-gradient-to-r from-amber-600 to-red-700 text-white px-10 py-5 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all">
+            <Link to="/register?role=student" className="inline-block bg-gradient-to-r from-amber-600 to-red-700 text-white px-10 py-5 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all">
               Find Your English Tutor
             </Link>
           </div>

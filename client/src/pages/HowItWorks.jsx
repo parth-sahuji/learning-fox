@@ -72,7 +72,7 @@ export default function HowItWorks() {
             </div>
 
             <div className="text-center mt-12">
-              <Link to="/find-tutor" className="inline-block bg-gradient-to-r from-orange-500 to-pink-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <Link to="/register?role=student" className="inline-block bg-gradient-to-r from-orange-500 to-pink-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
                 Find Your Perfect Tutor →
               </Link>
             </div>
@@ -125,7 +125,7 @@ export default function HowItWorks() {
             </div>
 
             <div className="text-center mt-12">
-              <Link to="/become-tutor" className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+              <Link to="/register?role=teacher" className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
                 Start Teaching Today →
               </Link>
             </div>

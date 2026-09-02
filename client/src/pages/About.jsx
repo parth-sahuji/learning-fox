@@ -212,6 +212,9 @@ export default function About() {
           <p className="text-xs text-[var(--text-secondary)]/60 mt-4">
             📞 8340173069 · ✉️ {CONTACT_EMAIL}
           </p>
+          <p className="text-sm mt-4">
+            <Link to="/locations" className="text-brand-500 hover:underline">Browse tutors & tutoring jobs by city →</Link>
+          </p>
         </div>
       </section>
     </div>

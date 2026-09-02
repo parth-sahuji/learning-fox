@@ -26,7 +26,7 @@ export default function ScienceTutors() {
             <p className="text-xl text-gray-200 mb-10 max-w-3xl mx-auto">
               Expert Physics, Chemistry & Biology tutoring for all grades and curricula
             </p>
-            <Link to="/find-tutor" className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-10 py-5 rounded-full font-bold hover:shadow-2xl hover:scale-105 transition-all">
+            <Link to="/register?role=student" className="inline-block bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-10 py-5 rounded-full font-bold hover:shadow-2xl hover:scale-105 transition-all">
               Find a Science Tutor
             </Link>
           </div>
@@ -152,7 +152,7 @@ export default function ScienceTutors() {
             <p className="text-xl text-gray-600 mb-10">
               Connect with passionate science tutors who bring concepts to life
             </p>
-            <Link to="/find-tutor" className="inline-block bg-gradient-to-r from-green-600 to-cyan-700 text-white px-10 py-5 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all">
+            <Link to="/register?role=student" className="inline-block bg-gradient-to-r from-green-600 to-cyan-700 text-white px-10 py-5 rounded-full font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all">
               Find Your Science Tutor
             </Link>
           </div>

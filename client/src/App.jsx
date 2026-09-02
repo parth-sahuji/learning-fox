@@ -32,9 +32,9 @@ import StudentFees      from './pages/student/Fees';
 
 import HowItWorks from './pages/HowItWorks';
 import OurRules from './pages/OurRules';
-import Mumbai from './pages/Mumbai';
-import NewYork from './pages/NewYork';
-import London from './pages/London';
+import LocationPage from './pages/LocationPage';
+import CareerPage from './pages/CareerPage';
+import LocationsIndex from './pages/LocationsIndex';
 import Mathematics from './pages/Mathematics';
 import Science from './pages/Science';
 import English from './pages/English';
@@ -49,6 +49,14 @@ export default function App() {
           <Routes>
             <Route path="/terms"    element={<Terms />} />
             <Route path="/about"         element={<About />} />
+            <Route path="/how-it-works"  element={<HowItWorks />} />
+            <Route path="/our-rules"     element={<OurRules />} />
+            <Route path="/subjects/mathematics" element={<Mathematics />} />
+            <Route path="/subjects/science"     element={<Science />} />
+            <Route path="/subjects/english"     element={<English />} />
+            <Route path="/locations"                    element={<LocationsIndex />} />
+            <Route path="/locations/:country/:city"     element={<LocationPage />} />
+            <Route path="/tutor-jobs/:country/:city"    element={<CareerPage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pending"  element={<PendingApproval />} />
             <Route path="/rejected" element={<PendingApproval />} />
@@ -87,14 +95,6 @@ export default function App() {
                 <Route path="/student"          element={<StudentDashboard />} />
                 <Route path="/student/profile"  element={<StudentProfile />} />
                 <Route path="/student/fees"     element={<StudentFees />} />
-		<Route path="/how-it-works" element={<HowItWorks />} />
-<Route path="/our-rules" element={<OurRules />} />
-<Route path="/locations/india/mumbai" element={<Mumbai />} />
-<Route path="/locations/usa/new-york" element={<NewYork />} />
-<Route path="/locations/uk/london" element={<London />} />
-<Route path="/subjects/mathematics" element={<Mathematics />} />
-<Route path="/subjects/science" element={<Science />} />
-<Route path="/subjects/english" element={<English />} />
               </Route>
             </Route>
 
