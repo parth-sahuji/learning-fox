@@ -2,6 +2,19 @@ import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { findLocation, subjects } from '../data/locations';
 
+const buildFaqs = (loc) => [
+  { q: `How do I become a tutor in ${loc.city} on Learning Foxx?`,
+    a: `Register as a teacher, complete your profile with your qualifications and documents, and our admin team will vet and approve you before you go live to students in ${loc.city}.` },
+  { q: `What documents do I need to register as a tutor in ${loc.city}?`,
+    a: `You'll need a valid government ID and your resume or CV as part of our admin verification process.` },
+  { q: `How much can I earn as a tutor in ${loc.city}?`,
+    a: `You set your own rate as a tutor on Learning Foxx. Earnings in ${loc.city} depend on your subject, experience, and how many students you take on.` },
+  { q: `Can I teach online, in-person, or both in ${loc.city}?`,
+    a: `Both. You can offer in-person home tutoring, online tutoring, or a mix, when you set up your profile.` },
+  { q: `How long does tutor approval take in ${loc.city}?`,
+    a: `Our admin team typically reviews and approves new tutor profiles within 1-2 days.` },
+];
+
 export default function CareerPage() {
   const { country, city } = useParams();
   const loc = findLocation(country, city);
@@ -20,6 +33,7 @@ export default function CareerPage() {
   const title = `Tutoring Jobs in ${loc.city} | Become a Home Tutor - Learning Foxx`;
   const description = `Looking for tutoring jobs in ${loc.city}? Join Learning Foxx as an admin-vetted home tutor. Set your own rate, flexible hours, direct student connections across ${loc.areas.slice(0, 3).join(', ')} and more.`;
   const canonical = `https://www.learningfoxx.com/tutor-jobs/${loc.countrySlug}/${loc.slug}`;
+  const faqs = buildFaqs(loc);
 
   return (
     <>
@@ -28,6 +42,13 @@ export default function CareerPage() {
         <meta name="description" content={description} />
         <meta name="keywords" content={`tutoring jobs ${loc.city}, become a tutor ${loc.city}, private tutor jobs ${loc.city}, teaching jobs ${loc.city}`} />
         <link rel="canonical" href={canonical} />
+        <script type="application/ld+json">{JSON.stringify({
+          '@context': 'https://schema.org', '@type': 'FAQPage',
+          mainEntity: faqs.map(f => ({
+            '@type': 'Question', name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        })}</script>
       </Helmet>
 
       <div className="min-h-screen bg-stone-50" style={{ paddingTop: '56px' }}>
@@ -67,6 +88,23 @@ export default function CareerPage() {
                   <div className="text-5xl mb-3">{s.icon}</div>
                   <div className="font-bold">{s.name}</div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 bg-white">
+          <div className="max-w-3xl mx-auto px-4">
+            <h2 className="text-4xl font-bold text-center mb-12">FAQs: Tutoring Jobs in {loc.city}</h2>
+            <div className="space-y-3">
+              {faqs.map((f) => (
+                <details key={f.q} className="bg-stone-50 border border-stone-200 rounded-lg p-4 group">
+                  <summary className="font-semibold cursor-pointer list-none flex justify-between items-center">
+                    {f.q}
+                    <span className="text-brand-500 group-open:rotate-45 transition-transform text-xl">+</span>
+                  </summary>
+                  <p className="text-[var(--text-secondary,#57534e)] mt-3">{f.a}</p>
+                </details>
               ))}
             </div>
           </div>
