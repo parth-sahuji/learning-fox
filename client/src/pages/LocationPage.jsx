@@ -56,7 +56,7 @@ export default function LocationPage() {
         })}</script>
       </Helmet>
 
-      <div className="min-h-screen bg-stone-50" style={{ paddingTop: '56px' }}>
+      <div className="min-h-screen relative" style={{ paddingTop: '56px' }}>
         <section className="bg-gradient-to-br from-brand-700 via-brand-800 to-stone-900 text-white py-24">
           <div className="max-w-7xl mx-auto px-4 text-center">
             <div className="inline-block bg-white/10 border border-white/20 rounded-full px-6 py-2 mb-6">
@@ -71,44 +71,44 @@ export default function LocationPage() {
           </div>
         </section>
 
-        <section className="py-16 bg-white">
+        <section className="py-16">
           <div className="max-w-7xl mx-auto px-4">
-            <h2 className="text-4xl font-bold text-center mb-12">{loc.city} Areas We Cover</h2>
+            <h2 className="text-4xl font-bold text-center mb-12 text-[var(--text-primary)]">{loc.city} Areas We Cover</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {loc.areas.map((area) => (
-                <div key={area} className="bg-brand-50 border border-brand-100 rounded-lg p-4 text-center">
-                  <span className="font-semibold">{area}</span>
+                <div key={area} className="card text-center py-4">
+                  <span className="font-semibold text-[var(--text-primary)]">{area}</span>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-16 bg-stone-100">
+        <section className="py-16" style={{ background: 'rgba(239,117,32,0.05)' }}>
           <div className="max-w-7xl mx-auto px-4">
-            <h2 className="text-4xl font-bold text-center mb-12">Popular Subjects</h2>
+            <h2 className="text-4xl font-bold text-center mb-12 text-[var(--text-primary)]">Popular Subjects</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
               {subjects.map((s) => (
-                <div key={s.name} className="bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all">
+                <div key={s.name} className="card text-center hover:border-brand-600 transition-colors">
                   <div className="text-5xl mb-3">{s.icon}</div>
-                  <div className="font-bold">{s.name}</div>
+                  <div className="font-bold text-[var(--text-primary)]">{s.name}</div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-16 bg-white">
+        <section className="py-16">
           <div className="max-w-3xl mx-auto px-4">
-            <h2 className="text-4xl font-bold text-center mb-12">FAQs: Tutoring in {loc.city}</h2>
+            <h2 className="text-4xl font-bold text-center mb-12 text-[var(--text-primary)]">FAQs: Tutoring in {loc.city}</h2>
             <div className="space-y-3">
               {faqs.map((f) => (
-                <details key={f.q} className="bg-stone-50 border border-stone-200 rounded-lg p-4 group">
-                  <summary className="font-semibold cursor-pointer list-none flex justify-between items-center">
+                <details key={f.q} className="card group">
+                  <summary className="font-semibold cursor-pointer list-none flex justify-between items-center text-[var(--text-primary)]">
                     {f.q}
                     <span className="text-brand-500 group-open:rotate-45 transition-transform text-xl">+</span>
                   </summary>
-                  <p className="text-[var(--text-secondary,#57534e)] mt-3">{f.a}</p>
+                  <p className="text-[var(--text-secondary)] mt-3">{f.a}</p>
                 </details>
               ))}
             </div>
