@@ -131,6 +131,12 @@ export default function StickyHeader() {
             </a>
           </div>
 
+          {/* Login */}
+          <Link to="/login"
+            className="flex items-center px-2.5 sm:px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs sm:text-sm font-bold no-underline transition-all flex-shrink-0">
+            Login
+          </Link>
+
           {/* RIGHT: Theme toggle */}
           <button onClick={toggle}
             className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all flex-shrink-0"
