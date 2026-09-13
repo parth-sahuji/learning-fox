@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { StaticRouter } from 'react-router-dom/server.js';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { RequireAuth, RedirectIfLoggedIn } from './components/AuthGuard';
@@ -39,11 +40,13 @@ import Mathematics from './pages/Mathematics';
 import Science from './pages/Science';
 import English from './pages/English';
 
-export default function App() {
+export default function App({ ssrPath } = {}) {
+  const Router = ssrPath ? StaticRouter : BrowserRouter;
+  const routerProps = ssrPath ? { location: ssrPath } : {};
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <Router {...routerProps}>
           <StickyHeader />
           <WhatsAppFloat />
           <Routes>
@@ -109,7 +112,7 @@ export default function App() {
               </div>
             } />
           </Routes>
-        </BrowserRouter>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );

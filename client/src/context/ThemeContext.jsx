@@ -4,6 +4,7 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [dark, setDark] = useState(() => {
+    if (typeof window === 'undefined') return false; // ponytail: SSR/prerender default, client effect below corrects it on hydrate
     const saved = localStorage.getItem('tutorapp_theme');
     return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
   });

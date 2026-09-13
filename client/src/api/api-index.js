@@ -4,7 +4,7 @@ import axios from 'axios';
 // Vercel proxy rewrites don't work reliably for POST/multipart requests
 const RENDER_URL = 'https://learning-fox-api.onrender.com';
 
-const isLocalDev = window.location.hostname === 'localhost';
+const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const baseURL = isLocalDev ? '/api' : `${RENDER_URL}/api`;
 
 const api = axios.create({
