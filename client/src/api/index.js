@@ -4,7 +4,7 @@ import axios from 'axios';
 // Vercel proxy rewrites don't work reliably for POST/multipart requests
 const RENDER_URL = 'https://learning-fox-api.onrender.com';
 
-const isLocalDev = window.location.hostname === 'localhost';
+const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 const baseURL = isLocalDev ? '/api' : `${RENDER_URL}/api`;
 
 const api = axios.create({
@@ -22,7 +22,7 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && !err.config?.url?.includes('/auth/login')) {
       localStorage.removeItem('tutorapp_token');
       delete api.defaults.headers.common['Authorization'];
       window.location.href = '/login';
