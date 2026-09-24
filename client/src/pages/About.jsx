@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import AnimatedBackground from '../components/AnimatedBackground';
 import { CONTACT_EMAIL } from '../components/StickyHeader';
+import { locations } from '../data/locations';
 
 const FEATURES = [
   { icon: '🏠', title: 'Home Tuition', desc: 'Expert tutors come to your home — no travel, no stress. Learn in the comfort of your own space.' },
@@ -37,11 +38,11 @@ export default function About() {
             Learning Foxx
           </h1>
           <p className="text-xl text-[var(--text-secondary)] mb-3 font-medium">
-            🏆 India's Trusted Home Tuition Platform
+            🏆 Trusted Home Tuition Platform — Worldwide
           </p>
           <p className="text-[var(--text-secondary)] text-base leading-relaxed max-w-xl mx-auto mb-8">
-            We connect students with qualified, verified home tutors across Pune, Maharashtra and India.
-            Quality education, delivered to your doorstep — affordable, safe, and reliable.
+            We connect students with qualified, verified home tutors across India, the USA, the UK and beyond —
+            proudly rooted in Pune, our founding city. Quality education, delivered to your doorstep — affordable, safe, and reliable.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/register?role=student" className="btn-primary px-8 py-3 text-base">
@@ -54,7 +55,7 @@ export default function About() {
 
           {/* Trust strip */}
           <div className="flex flex-wrap justify-center gap-6 mt-10">
-            {['✅ Verified Tutors', '📍 Pune & Across India', '🔒 Safe & Secure', '⭐ Best Results'].map(b => (
+            {['✅ Verified Tutors', '🌍 India · USA · UK & Growing', '🔒 Safe & Secure', '⭐ Best Results'].map(b => (
               <span key={b} className="text-sm text-[var(--text-secondary)] font-semibold">{b}</span>
             ))}
           </div>
@@ -120,14 +121,14 @@ export default function About() {
       <section className="relative content-layer py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-display text-3xl font-bold text-[var(--text-primary)] mb-3">Subjects We Cover</h2>
-          <p className="text-[var(--text-secondary)] mb-8">For Class 1 to 12 — CBSE, ICSE, Maharashtra Board, and more</p>
+          <p className="text-[var(--text-secondary)] mb-8">For Class 1 to 12 — CBSE, ICSE, IB, IGCSE, State Boards & more</p>
           <div className="flex flex-wrap justify-center gap-3">
             {SUBJECTS.map(s => (
-              <span key={s} className="px-4 py-2 rounded-full text-sm font-semibold border-2 border-brand-700/50 text-brand-300 bg-brand-900/20">
+              <span key={s} className="px-4 py-2 rounded-full text-sm font-semibold border-2 border-brand-500/40 text-[var(--text-primary)] bg-brand-500/10">
                 {s}
               </span>
             ))}
-            <span className="px-4 py-2 rounded-full text-sm font-semibold border-2 border-brand-500 text-brand-300 bg-brand-900/30">
+            <span className="px-4 py-2 rounded-full text-sm font-semibold border-2 border-brand-500 text-[var(--text-primary)] bg-brand-500/15">
               + Many More
             </span>
           </div>
@@ -174,17 +175,22 @@ export default function About() {
       {/* Location */}
       <section className="relative content-layer py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-display text-3xl font-bold text-[var(--text-primary)] mb-4">📍 Where We Operate</h2>
+          <h2 className="font-display text-3xl font-bold text-[var(--text-primary)] mb-4">🌍 Where We Operate</h2>
           <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-            Currently serving students and teachers across <strong className="text-[var(--text-primary)]">Pune, Maharashtra</strong>.
-            Expanding to Mumbai, Nagpur, and other major cities soon.
-            Students can mention their exact locality during registration for best tutor matching.
+            Learning Foxx connects students and teachers across <strong className="text-[var(--text-primary)]">{locations.length} cities in {new Set(locations.map(l => l.country)).size} countries</strong> — and growing.
+            Proudly rooted in <strong className="text-[var(--text-primary)]">Pune</strong>, our founding city.
+            Students can mention their exact locality during registration for the best tutor matching.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            {['Pune', 'Pimpri-Chinchwad', 'Kothrud', 'Shivaji Nagar', 'Hadapsar', 'Wakad', 'Baner', 'Viman Nagar', 'Deccan', 'Kalyani Nagar'].map(l => (
-              <span key={l} className="text-xs px-3 py-1.5 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-700/30 font-medium">
-                📍 {l}
-              </span>
+            {locations.map(l => (
+              <Link key={l.slug} to={`/locations/${l.countrySlug}/${l.slug}`}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${
+                  l.slug === 'pune'
+                    ? 'border-brand-500 bg-brand-500/15 text-[var(--text-primary)]'
+                    : 'border-brand-500/30 bg-brand-500/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}>
+                {l.flag} {l.city}{l.slug === 'pune' ? ' 🏠' : ''}
+              </Link>
             ))}
           </div>
         </div>
