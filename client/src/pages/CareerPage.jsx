@@ -42,6 +42,16 @@ export default function CareerPage() {
         <meta name="description" content={description} />
         <meta name="keywords" content={`tutoring jobs ${loc.city}, become a tutor ${loc.city}, private tutor jobs ${loc.city}, teaching jobs ${loc.city}`} />
         <link rel="canonical" href={canonical} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content="https://www.learningfoxx.com/fox-logo.png" />
+        <meta property="og:site_name" content="Learning Foxx" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content="https://www.learningfoxx.com/fox-logo.png" />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org', '@type': 'FAQPage',
           mainEntity: faqs.map(f => ({

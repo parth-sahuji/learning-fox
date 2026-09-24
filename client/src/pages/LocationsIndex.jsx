@@ -12,8 +12,18 @@ export default function LocationsIndex() {
     <>
       <Helmet>
         <title>All Locations | Home Tutors & Tutoring Jobs Worldwide - Learning Foxx</title>
-        <meta name="description" content="Learning Foxx connects students and tutors across India, the USA and the UK. Browse home tutors or tutoring jobs in your city." />
+        <meta name="description" content="Learning Foxx connects students and tutors across India, the USA, the UK, Germany, France, Spain and Italy. Browse home tutors or tutoring jobs in your city." />
         <link rel="canonical" href="https://www.learningfoxx.com/locations" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.learningfoxx.com/locations" />
+        <meta property="og:title" content="All Locations | Home Tutors & Tutoring Jobs Worldwide - Learning Foxx" />
+        <meta property="og:description" content="Verified home tutors and tutoring jobs, worldwide. Browse every city Learning Foxx serves." />
+        <meta property="og:image" content="https://www.learningfoxx.com/fox-logo.png" />
+        <meta property="og:site_name" content="Learning Foxx" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="All Locations | Home Tutors & Tutoring Jobs Worldwide - Learning Foxx" />
+        <meta name="twitter:description" content="Verified home tutors and tutoring jobs, worldwide. Browse every city Learning Foxx serves." />
+        <meta name="twitter:image" content="https://www.learningfoxx.com/fox-logo.png" />
       </Helmet>
 
       <div className="min-h-screen relative" style={{ paddingTop: '56px' }}>
