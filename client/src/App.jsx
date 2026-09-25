@@ -6,6 +6,7 @@ import { RequireAuth, RedirectIfLoggedIn } from './components/AuthGuard';
 import StickyHeader from './components/StickyHeader';
 import WhatsAppFloat from './components/WhatsAppFloat';
 import Layout from './components/Layout';
+import PublicLayout from './components/PublicLayout';
 
 import Login         from './pages/Login';
 import About         from './pages/About';
@@ -50,16 +51,21 @@ export default function App({ ssrPath } = {}) {
           <StickyHeader />
           <WhatsAppFloat />
           <Routes>
-            <Route path="/terms"    element={<Terms />} />
-            <Route path="/about"         element={<About />} />
-            <Route path="/how-it-works"  element={<HowItWorks />} />
-            <Route path="/our-rules"     element={<OurRules />} />
-            <Route path="/subjects/mathematics" element={<Mathematics />} />
-            <Route path="/subjects/science"     element={<Science />} />
-            <Route path="/subjects/english"     element={<English />} />
-            <Route path="/locations"                    element={<LocationsIndex />} />
-            <Route path="/locations/:country/:city"     element={<LocationPage />} />
-            <Route path="/tutor-jobs/:country/:city"    element={<CareerPage />} />
+            {/* PUBLIC MARKETING PAGES — Footer added via PublicLayout so Our Rules/Terms/etc. are always reachable */}
+            <Route element={<PublicLayout />}>
+              <Route path="/"               element={<About />} />
+              <Route path="/terms"          element={<Terms />} />
+              <Route path="/about"          element={<About />} />
+              <Route path="/how-it-works"   element={<HowItWorks />} />
+              <Route path="/our-rules"      element={<OurRules />} />
+              <Route path="/subjects/mathematics" element={<Mathematics />} />
+              <Route path="/subjects/science"     element={<Science />} />
+              <Route path="/subjects/english"     element={<English />} />
+              <Route path="/locations"                    element={<LocationsIndex />} />
+              <Route path="/locations/:country/:city"     element={<LocationPage />} />
+              <Route path="/tutor-jobs/:country/:city"    element={<CareerPage />} />
+            </Route>
+
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/pending"  element={<PendingApproval />} />
             <Route path="/rejected" element={<PendingApproval />} />
@@ -101,7 +107,6 @@ export default function App({ ssrPath } = {}) {
               </Route>
             </Route>
 
-            <Route path="/" element={<About />} />
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center" style={{ paddingTop: '56px', background: '#0f0a06' }}>
                 <div className="text-center">

@@ -5,6 +5,7 @@ import { locations } from '../data/locations';
 
 const FEATURES = [
   { icon: '🏠', title: 'Home Tuition', desc: 'Expert tutors come to your home — no travel, no stress. Learn in the comfort of your own space.' },
+  { icon: '💻', title: 'Online Tutoring', desc: 'Prefer remote learning? Students and teachers anywhere in the world can connect and teach online, no location required.' },
   { icon: '✅', title: 'Verified Tutors', desc: 'Every teacher is manually vetted by our admin team with identity verification before being approved.' },
   { icon: '📚', title: 'All Subjects', desc: 'Mathematics, Science, English, Hindi, Computer Science, Commerce, and more — for Class 1 to 12.' },
   { icon: '💰', title: 'Affordable Fees', desc: 'Transparent monthly fee set by the platform. No hidden charges. Pay only after confirming sessions.' },
@@ -41,8 +42,9 @@ export default function About() {
             🏆 Trusted Home Tuition Platform — Worldwide
           </p>
           <p className="text-[var(--text-secondary)] text-base leading-relaxed max-w-xl mx-auto mb-8">
-            We connect students with qualified, verified home tutors across India, the USA, the UK and beyond —
-            proudly rooted in Pune, our founding city. Quality education, delivered to your doorstep — affordable, safe, and reliable.
+            We connect students, teachers and parents with qualified, verified tutors across India, the USA, the UK, Germany,
+            France, Spain, Italy, Australia, New Zealand and beyond — proudly rooted in Pune, our founding city.
+            Choose an in-person home tutor or an online tutor from anywhere in the world. Quality education, delivered your way — affordable, safe, and reliable.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/register?role=student" className="btn-primary px-8 py-3 text-base">
@@ -55,7 +57,7 @@ export default function About() {
 
           {/* Trust strip */}
           <div className="flex flex-wrap justify-center gap-6 mt-10">
-            {['✅ Verified Tutors', '🌍 India · USA · UK & Growing', '🔒 Safe & Secure', '⭐ Best Results'].map(b => (
+            {['✅ Verified Tutors', '🌍 9 Countries, Online Too', '💻 Remote & In-Person', '🔒 Safe & Secure', '⭐ Best Results'].map(b => (
               <span key={b} className="text-sm text-[var(--text-secondary)] font-semibold">{b}</span>
             ))}
           </div>

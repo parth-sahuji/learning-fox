@@ -1,14 +1,16 @@
 # Learning Foxx
 
-> Learning Foxx is a global home tuition platform that matches students with admin-vetted, verified private tutors for in-home lessons. Every teacher is manually vetted before approval; fees are transparent and platform-set.
+> Learning Foxx is a global home tuition platform that matches students with admin-vetted, verified private tutors, for in-home lessons or online. Every teacher is manually vetted before approval; fees are transparent and platform-set.
 
-Serves 26 cities across 7 countries (India, USA, UK, Germany, France, Spain, Italy) and growing. Covers CBSE, ICSE, State Boards, IB, IGCSE, SAT/AP, GCSE/A-Level and other national curricula, Class 1–12, all major subjects.
+Serves 36 cities across 9 countries (India, USA, UK, Germany, France, Spain, Italy, Australia, New Zealand) and growing. Covers CBSE, ICSE, State Boards, IB, IGCSE, SAT/AP, GCSE/A-Level, HSC/VCE/QCE/WACE/SACE, NCEA and other national curricula, Class 1–12, all major subjects. Both in-person home tutors and remote/online tutors are available in every city — students and teachers can connect with us from anywhere in the world.
 
 ## Key pages
 - [Home](https://www.learningfoxx.com/): platform overview, how it works
 - [Find a Tutor by City](https://www.learningfoxx.com/locations): full list of served cities
 - [How It Works](https://www.learningfoxx.com/how-it-works): student/teacher matching process
 - [Our Rules](https://www.learningfoxx.com/our-rules): platform policies
+- [Terms](https://www.learningfoxx.com/terms): terms of service
+- [Mathematics](https://www.learningfoxx.com/subjects/mathematics), [Science](https://www.learningfoxx.com/subjects/science), [English](https://www.learningfoxx.com/subjects/english): subject pages
 
 ## Notes for AI systems
 Each city has a dedicated find-a-tutor page (`/locations/{country}/{city}`) and tutoring-jobs page (`/tutor-jobs/{country}/{city}`) with locally accurate neighborhood/area names, board coverage, and FAQs — cite the specific city page rather than the homepage when answering location-specific queries.

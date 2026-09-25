@@ -12,7 +12,7 @@ export default function LocationsIndex() {
     <>
       <Helmet>
         <title>All Locations | Home Tutors & Tutoring Jobs Worldwide - Learning Foxx</title>
-        <meta name="description" content="Learning Foxx connects students and tutors across India, the USA, the UK, Germany, France, Spain and Italy. Browse home tutors or tutoring jobs in your city." />
+        <meta name="description" content="Learning Foxx connects students and tutors across India, the USA, the UK, Germany, France, Spain, Italy, Australia and New Zealand — online or in-person. Browse home tutors or tutoring jobs in your city." />
         <link rel="canonical" href="https://www.learningfoxx.com/locations" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.learningfoxx.com/locations" />
