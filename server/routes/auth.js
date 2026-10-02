@@ -38,13 +38,14 @@ router.post('/register', (req, res, next) => {
     education, skills, bio,
     class: studentClass,
     subject_needs,
-    days_per_week, address, school_board, locality,
+    days_per_week, address: addressRaw, school_board, locality,
   } = req.body;
 
+  const address = addressRaw || locality || '';
   const subjects_taught = subjects_taught_raw || '';
   const class_from = teach_class_from || '';
   const class_to = teach_class_to || '';
-  const subjects = subject_needs || '';
+  const subjects = subject_needs || (role === 'student' ? subjects_taught_raw : '') || '';
 
   // Role-specific requiredness (conditional on role, so not expressed in the schema itself)
   if (role === 'teacher') {
