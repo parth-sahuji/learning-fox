@@ -169,7 +169,7 @@ export default function Vetting() {
         </div>
 
         {/* RIGHT: Detail panel */}
-        <div>
+        <div className="lg:sticky lg:top-0 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
           {!selected ? (
             <div className="card text-center py-20 border-2 border-dashed border-[var(--border)]">
               <div className="text-4xl mb-3 opacity-40">👆</div>

@@ -67,7 +67,7 @@ export default function AdminTeachers() {
         </div>
 
         {/* Detail */}
-        <div>
+        <div className="lg:sticky lg:top-0 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
           {!selected ? (
             <div className="card text-center py-16 border-2 border-dashed" style={{ borderColor: 'var(--border)' }}>
               <div className="text-4xl mb-2 opacity-30">👆</div>
