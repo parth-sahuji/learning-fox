@@ -3,16 +3,18 @@ const { z } = require('zod');
 // ── Reusable field primitives ────────────────────────────────────────────────
 // Every free-text field blocks < and > (closes HTML-injection into admin
 // vetting views and notification emails, which render these values as-is).
-const noHtml = (label) => (v) => !/[<>]/.test(v) || `${label} can't contain < or >`;
+// refine() passes on any truthy return, so the old `|| 'message'` form never rejected anything. Spread = [fn, {message}].
+const noHtml = (label) => [(v) => !/[<>]/.test(v), { message: `${label} can't contain < or >` }];
 
 const email = z.string().trim().toLowerCase().email('Enter a valid email address').max(255);
 
 const password = z.string().min(6, 'Password must be at least 6 characters').max(72);
 
 const fullName = z.string().trim().min(2).max(100)
-  .regex(/^[\p{L} .'-]+$/u, 'Name can only contain letters, spaces, and . \' -');
+  .regex(/^[\p{L}\p{M} .'-]+$/u, 'Name can only contain letters, spaces, and . \' -');
 
 const phone = z.string().trim()
+  .regex(/^[+\d\s().-]+$/, 'A valid phone number is required') // also keeps HTML out of admin alert emails
   .refine(v => { const d = v.replace(/\D/g, ''); return d.length >= 10 && d.length <= 15; },
     'A valid phone number is required');
 
@@ -20,11 +22,11 @@ const agencyId = z.string().trim().max(50).optional().default('default');
 
 const role = z.enum(['teacher', 'student'], { message: 'Role must be teacher or student' });
 
-const shortText = (max, label) => z.string().trim().max(max).refine(noHtml(label)).optional();
-const requiredShortText = (max, label) => z.string().trim().min(1, `${label} is required`).max(max).refine(noHtml(label));
+const shortText = (max, label) => z.string().trim().max(max).refine(...noHtml(label)).optional();
+const requiredShortText = (max, label) => z.string().trim().min(1, `${label} is required`).max(max).refine(...noHtml(label));
 
-const bio = z.string().trim().max(2000).refine(noHtml('Bio')).optional();
-const address = z.string().trim().min(3, 'Address/location is required').max(500).refine(noHtml('Address'));
+const bio = z.string().trim().max(2000).refine(...noHtml('Bio')).optional();
+const address = z.string().trim().min(3, 'Address/location is required').max(500).refine(...noHtml('Address'));
 const studentClass = requiredShortText(20, 'Class');
 const daysPerWeek = z.coerce.number().int().min(1).max(7).optional();
 

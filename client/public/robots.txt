@@ -5,6 +5,8 @@ Allow: /
 Disallow: /admin
 Disallow: /student
 Disallow: /pending
+Disallow: /teacher
+Disallow: /reset-password
 
 # Point Google directly to your sitemap
 Sitemap: https://www.learningfoxx.com/sitemap.xml

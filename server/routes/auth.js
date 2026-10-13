@@ -124,6 +124,13 @@ router.post('/register', (req, res, next) => {
     }
 
     await client.query('COMMIT');
+
+    const roleLabel = role === 'teacher' ? 'Teacher' : 'Student';
+    (role === 'teacher' ? welcomeTeacherEmail : welcomeStudentEmail)({ full_name, email })
+      .catch(err => console.error('Welcome email failed:', err.message));
+    notifyAdminNewUser({ full_name, email, role: roleLabel, phone })
+      .catch(err => console.error('Admin notify email failed:', err.message));
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role,
         status: user.status, agency_id: user.agency_id, full_name: user.full_name },

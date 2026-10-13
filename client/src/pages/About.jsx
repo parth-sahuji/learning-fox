@@ -152,7 +152,7 @@ export default function About() {
                 <li>✓ Need a tutor in their local area</li>
                 <li>✓ Want consistent, trackable progress</li>
               </ul>
-              <Link to="/register" className="btn-primary w-full mt-5 text-center block">
+              <Link to="/register?role=student" className="btn-primary w-full mt-5 text-center block">
                 Register as Student
               </Link>
             </div>
@@ -166,7 +166,7 @@ export default function About() {
                 <li>✓ Can travel to nearby student locations</li>
                 <li>✓ Want a trusted platform to find students</li>
               </ul>
-              <Link to="/register" className="btn-primary w-full mt-5 text-center block">
+              <Link to="/register?role=teacher" className="btn-primary w-full mt-5 text-center block">
                 Register as Teacher
               </Link>
             </div>

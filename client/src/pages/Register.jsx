@@ -98,7 +98,7 @@ export default function Register() {
   const handleStep1 = e => {
     e.preventDefault();
     setError('');
-    if (!/^[\p{L} .'-]+$/u.test(form.full_name.trim())) return setError("Name can only contain letters, spaces, and . ' -");
+    if (!/^[\p{L}\p{M} .'-]+$/u.test(form.full_name.trim())) return setError("Name can only contain letters, spaces, and . ' -");
     const phoneDigits = form.phone.replace(/\D/g, '');
     if (phoneDigits.length < 10 || phoneDigits.length > 15) return setError('A valid phone number is required.');
     if (form.password.length < 8) return setError('Password must be at least 8 characters.');

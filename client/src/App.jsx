@@ -112,7 +112,7 @@ export default function App({ ssrPath } = {}) {
                 <div className="text-center">
                   <img src="/fox-logo.png" alt="" className="w-20 h-20 mx-auto object-contain mb-4 opacity-40" />
                   <h1 className="font-display text-3xl font-bold text-white mb-2">Page Not Found</h1>
-                  <a href="/login" className="btn-primary inline-block mt-4">Go Home</a>
+                  <a href="/" className="btn-primary inline-block mt-4">Go Home</a>
                 </div>
               </div>
             } />

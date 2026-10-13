@@ -35,9 +35,13 @@ function requireRole(...roles) {
   };
 }
 
-function requireApproved(req, res, next) {
+// ponytail: JWT status is a snapshot from login/register time. Re-check the DB only when the token
+// says not-approved, so users approved after logging in aren't 403'd for up to 7 days.
+async function requireApproved(req, res, next) {
   if (req.user.status !== 'approved') {
-    return res.status(403).json({ error: 'Account pending admin approval' });
+    const { rows } = await pool.query('SELECT status FROM users WHERE id=$1', [req.user.id]);
+    if (rows[0]?.status !== 'approved') return res.status(403).json({ error: 'Account pending admin approval' });
+    req.user.status = 'approved';
   }
   next();
 }

@@ -32,8 +32,16 @@ for (const route of ROUTES) {
   // Pages without their own <Helmet> (home/about) leave these empty - default head stays as-is.
   const title = helmet.title.toString();
   if (/<title[^>]*>[^<]+<\/title>/.test(title)) html = html.replace(/<title>[\s\S]*?<\/title>/, title);
-  const metaDesc = helmet.meta.toString();
-  if (metaDesc) html = html.replace(/<meta name="description"[^>]*\/?>/, metaDesc);
+  // Page-level <meta>/<link> replace the template's homepage defaults one-for-one. Before, only the description
+  // was swapped and helmet.link was never injected, so every city/subject page kept canonical=home + home og:* tags.
+  const meta = helmet.meta.toString();
+  for (const [, key] of meta.matchAll(/(?:name|property)="([^"]+)"/g))
+    html = html.replace(new RegExp(`<meta (?:name|property)="${key}"[^>]*>\\s*`), '');
+  if (meta) html = html.replace('</head>', `${meta}\n  </head>`);
+  const link = helmet.link.toString();
+  if (link) html = html.replace(/<link rel="canonical"[^>]*>\s*/, '').replace('</head>', `${link}\n  </head>`);
+  const canon = link.match(/href="([^"]+)"/)?.[1]; // keep og:url in step with canonical for pages whose Helmet sets only canonical
+  if (canon) html = html.replace(/(property="og:url" content=")[^"]*/, `$1${canon}`);
   const jsonLd = helmet.script.toString();
   if (jsonLd) html = html.replace('</head>', `${jsonLd}\n  </head>`);
 
