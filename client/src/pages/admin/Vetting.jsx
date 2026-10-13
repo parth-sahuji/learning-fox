@@ -8,10 +8,13 @@ export default function Vetting() {
   const [selected, setSelected] = useState(null); // user details panel
   const [toast, setToast] = useState(null);
   const [queueTab, setQueueTab] = useState('teacher'); // 'teacher' | 'student'
+  const [search, setSearch] = useState('');
 
   const teacherQueue = users.filter(u => u.role === 'teacher');
   const studentQueue = users.filter(u => u.role === 'student');
-  const visibleUsers = queueTab === 'teacher' ? teacherQueue : studentQueue;
+  const q = search.toLowerCase();
+  const visibleUsers = (queueTab === 'teacher' ? teacherQueue : studentQueue).filter(u =>
+    !q || u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.phone?.includes(search));
 
   const load = () => {
     setLoading(true);
@@ -117,12 +120,15 @@ export default function Vetting() {
             </button>
           </div>
 
+          <input type="text" className="input" placeholder="Search name, email, phone..."
+            value={search} onChange={e => setSearch(e.target.value)} />
+
           {loading ? (
             [...Array(3)].map((_, i) => <div key={i} className="card shimmer h-24" />)
           ) : visibleUsers.length === 0 ? (
             <div className="card text-center py-16">
               <div className="text-5xl mb-3">✅</div>
-              <p className="font-semibold text-[var(--text-primary)]">All caught up!</p>
+              <p className="font-semibold text-[var(--text-primary)]">{search ? 'No matches' : 'All caught up!'}</p>
               <p className="text-sm text-[var(--text-secondary)] mt-1">
                 No pending {queueTab === 'teacher' ? 'teacher' : 'student'} registrations.
               </p>
