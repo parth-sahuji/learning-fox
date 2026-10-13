@@ -349,6 +349,17 @@ router.post('/fees/trigger', validate(schemas.feeTrigger), async (req, res) => {
   }
 });
 
+// DELETE /api/admin/users/:id - hard delete; FK ON DELETE CASCADE clears profiles, assignments, fees, notifications
+// ponytail: Supabase files (aadhar/resume/portfolio) are not removed; add deleteFromSupabase calls if storage clutter matters
+router.delete('/users/:id', validate(schemas.idParam, 'params'), async (req, res) => {
+  const r = await pool.query(
+    `DELETE FROM users WHERE id=$1 AND agency_id=$2 AND role != 'admin'`,
+    [req.params.id, req.user.agency_id]
+  );
+  if (!r.rowCount) return res.status(404).json({ error: 'User not found' });
+  res.json({ ok: true });
+});
+
 // GET /api/admin/all-users - All users for management
 router.get('/all-users', async (req, res) => {
   const { agency_id } = req.user;

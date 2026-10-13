@@ -19,6 +19,15 @@ export default function AdminStudents() {
     } catch { setSelected({ ...s, loading: false }); }
   };
 
+  const removeUser = async () => {
+    if (!window.confirm(`Permanently delete ${selected.email}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/admin/users/${selected.id}`);
+      setStudents(l => l.filter(x => x.id !== selected.id));
+      setSelected(null);
+    } catch (e) { alert(e.response?.data?.error || 'Delete failed'); }
+  };
+
   const filtered = students.filter(s =>
     !search ||
     s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -86,7 +95,10 @@ export default function AdminStudents() {
                     <p className="text-sm text-[var(--text-secondary)]">📞 {selected.phone}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="text-[var(--text-secondary)] hover:text-white p-1">✕</button>
+                <div className="flex items-center gap-2">
+                  <button onClick={removeUser} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-lg border border-red-700/40">Delete</button>
+                  <button onClick={() => setSelected(null)} className="text-[var(--text-secondary)] hover:text-white p-1">✕</button>
+                </div>
               </div>
 
               {selected.loading ? (
